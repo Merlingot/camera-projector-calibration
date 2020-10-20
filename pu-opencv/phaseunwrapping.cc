@@ -83,6 +83,7 @@ int main(int argc, char **argv)
         help();
         return -1;
     }
+
     structured_light::SinusoidalPattern::Params params;
     phase_unwrapping::HistogramPhaseUnwrapping::Params paramsUnwrapping;
     // Retrieve parameters written in the command line
@@ -104,27 +105,58 @@ int main(int argc, char **argv)
             structured_light::SinusoidalPattern::create(makePtr<structured_light::SinusoidalPattern::Params>(params));
     Ptr<phase_unwrapping::HistogramPhaseUnwrapping> phaseUnwrapping;
     vector<Mat> patterns;
+
+
     Mat shadowMask;
     Mat unwrappedPhaseMap, unwrappedPhaseMap8;
     Mat wrappedPhaseMap, wrappedPhaseMap8;
     //Generate sinusoidal patterns
     sinus->generate(patterns);
-    VideoCapture cap(CAP_PVAPI);
+    // VideoCapture cap(CAP_PVAPI);
+    VideoCapture cap(1);
     if( !cap.isOpened() )
     {
         cout << "Camera could not be opened" << endl;
         return -1;
     }
     cap.set(CAP_PROP_PVAPI_PIXELFORMAT, CAP_PVAPI_PIXELFORMAT_MONO8);
+
+    // -----------------------
     namedWindow("pattern", WINDOW_NORMAL);
-    setWindowProperty("pattern", WND_PROP_FULLSCREEN, WINDOW_FULLSCREEN);
+    // setWindowProperty("pattern", WND_PROP_FULLSCREEN, WINDOW_FULLSCREEN);
+
+    // define dimension of the main display
+    int width_first  = 2880;
+    int height_first = 1800;
+
+    // define dimension of the second display
+    int width_second  = 1280;
+    int height_second = 720;
+
+    // move the window to the second display
+    // (assuming the two displays are top aligned)
+    moveWindow("pattern", width_first, height_first);
+    setWindowProperty("pattern", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+    // -----------------------
+
     imshow("pattern", patterns[0]);
     cout << "Press any key when ready" << endl;
     waitKey(0);
+
+    // Prendre une photo sans rien
+    int allo = 1;
+    vector<Mat> imgw(allo);
+    cap >> imgw[0];
+    // Mat imgw8;
+    // img.convertTo(imgw8, CV_8U, 255,128);
+    imwrite(outputUnwrappedPhasePath + "image_sans_frange" + ".png", imgw);
+    // Fin
+
     int nbrOfImages = 30;
     int count = 0;
     vector<Mat> img(nbrOfImages);
     Size camSize(-1, -1);
+
     while( count < nbrOfImages )
     {
         for(int i = 0; i < (int)patterns.size(); ++i )

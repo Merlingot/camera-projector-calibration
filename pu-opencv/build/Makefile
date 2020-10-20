@@ -111,6 +111,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named testexe
+
+# Build rule for target.
+testexe: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 testexe
+.PHONY : testexe
+
+# fast build rule for target.
+testexe/fast:
+	$(MAKE) -f CMakeFiles/testexe.dir/build.make CMakeFiles/testexe.dir/build
+.PHONY : testexe/fast
+
+#=============================================================================
 # Target rules for targets named unwrapexe
 
 # Build rule for target.
@@ -150,6 +163,33 @@ phaseunwrapping.cc.s:
 	$(MAKE) -f CMakeFiles/unwrapexe.dir/build.make CMakeFiles/unwrapexe.dir/phaseunwrapping.cc.s
 .PHONY : phaseunwrapping.cc.s
 
+test.o: test.cc.o
+
+.PHONY : test.o
+
+# target to build an object file
+test.cc.o:
+	$(MAKE) -f CMakeFiles/testexe.dir/build.make CMakeFiles/testexe.dir/test.cc.o
+.PHONY : test.cc.o
+
+test.i: test.cc.i
+
+.PHONY : test.i
+
+# target to preprocess a source file
+test.cc.i:
+	$(MAKE) -f CMakeFiles/testexe.dir/build.make CMakeFiles/testexe.dir/test.cc.i
+.PHONY : test.cc.i
+
+test.s: test.cc.s
+
+.PHONY : test.s
+
+# target to generate assembly for a file
+test.cc.s:
+	$(MAKE) -f CMakeFiles/testexe.dir/build.make CMakeFiles/testexe.dir/test.cc.s
+.PHONY : test.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -158,10 +198,14 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
+	@echo "... testexe"
 	@echo "... unwrapexe"
 	@echo "... phaseunwrapping.o"
 	@echo "... phaseunwrapping.i"
 	@echo "... phaseunwrapping.s"
+	@echo "... test.o"
+	@echo "... test.i"
+	@echo "... test.s"
 .PHONY : help
 
 
