@@ -20,5 +20,6 @@ wrapped_phase_map, shadow_mask = sinus.computePhaseMap(patterns)
 
 cam_size = (params.width, params.height)
 print("before")
-unwrapped_phase_map = sinus.unwrapPhaseMap(wrapped_phase_map, cam_size) # shadow_mask????
+unwrapped_phase_map = wrapped_phase_map.copy()
+sinus.unwrapPhaseMap(wrapped_phase_map, cam_size, unwrapped_phase_map, shadow_mask)
 print("after")
