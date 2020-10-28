@@ -1,4 +1,3 @@
 /Users/mariannelado-roy/optech/crvi/pu-opencv/build/CMakeFiles/rebuild_cache.dir
 /Users/mariannelado-roy/optech/crvi/pu-opencv/build/CMakeFiles/edit_cache.dir
-/Users/mariannelado-roy/optech/crvi/pu-opencv/build/CMakeFiles/testexe.dir
-/Users/mariannelado-roy/optech/crvi/pu-opencv/build/CMakeFiles/unwrapexe.dir
+/Users/mariannelado-roy/optech/crvi/pu-opencv/build/CMakeFiles/cacaexe.dir

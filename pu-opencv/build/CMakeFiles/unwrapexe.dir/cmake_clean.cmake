@@ -1,5 +1,5 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/unwrapexe.dir/phaseunwrapping.cc.o"
+  "CMakeFiles/unwrapexe.dir/phaseunwrapping.cpp.o"
   "unwrapexe"
   "unwrapexe.pdb"
 )
