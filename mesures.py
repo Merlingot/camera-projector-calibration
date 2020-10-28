@@ -32,7 +32,7 @@ CAM_OSNUMBER=0
 # Dimensions du first monitor
 monitor_width = int(1440); monitor_heigth = int(900);
 # Dimensions du first monitor
-projector_width = int(800) ; projector_heigth = int(608);
+projector_width = int(800) ; projector_heigth = int(600);
 
 # Sinusoidal Patterns------------------------------------
 # Set patterns parameters
