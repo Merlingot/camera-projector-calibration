@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 # Camera et moniteurs ----------------
 CAM_OSNUMBER=1
 # Dimensions du first monitor
-monitor_width = int(2880); monitor_heigth = int(1800);
+monitor_width = int(1440); monitor_heigth = int(900);
 # Dimensions du first monitor
-projector_width = int(1280) ; projector_heigth = int(720);
+projector_width = int(800) ; projector_heigth = int(600);
 
 
 # Sinusoidal Patterns------------------------------------
@@ -35,9 +35,8 @@ height, width = test_pattern.shape[:2]
 
 namedWindow("pattern", WINDOW_NORMAL);
 moveWindow("pattern", 0, 0);
-imshow("pattern", test_pattern);
-waitKey(0)
 moveWindow("pattern", 0, -monitor_heigth);
+imshow("pattern", test_pattern);
 waitKey(0)
 setWindowProperty("pattern", WND_PROP_FULLSCREEN, WINDOW_FULLSCREEN);
 waitKey(0)

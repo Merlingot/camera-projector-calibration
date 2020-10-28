@@ -84,129 +84,129 @@ destroyAllWindows()
 
 
 
-# greyImages=[]
-# for i in len(captureImages):
-#     greyImages.append( cvtColor(captureImages[i], COLOR_BGR2GRAY) )
+greyImages=[]
+for i in len(captureImages):
+    greyImages.append( cvtColor(captureImages[i], COLOR_BGR2GRAY) )
 
-# #--------------------------------------------------------------------
-#
-# # UNWRAPPING  -------------------------------------------------------
-# camSize = (captureImages[0].shape[0],captureImages[0].shape[1] )
-# paramsUnwrapping = phase_unwrapping_HistogramPhaseUnwrapping_Params()
-# paramsUnwrapping.height=projector_heigth;
-# paramsUnwrapping.width=projector_width;
-# phaseUnwrapping= phase_unwrapping_HistogramPhaseUnwrapping.create(paramsUnwrapping)
-#
-#
-#
-# for  i in range( 1, nbrOfImages - 2):
-#     print('allo')
-#
-#         if params.methodId == structured_light.FTP:
-#
-#             for( i in range( 0, nbrOfImages) ):
-#                 #We need three images to compute the shadow mask, as described in the reference paper
-#                 # even if the phase map is computed from one pattern only
-#                 captures=[]
-#                 if( i == nbrOfImages - 2 ):
-#                     captures.append(greyImages[i]);
-#                     captures.append(greyImages[i-1]);
-#                     captures.append(greyImages[i+1]);
-#                 else if( i == nbrOfImages - 1 ):
-#                     captures.push_back(greyImages[i]);
-#                     captures.push_back(greyImages[i-1]);
-#                     captures.push_back(greyImages[i-2]);
-#                 else:
-#                     captures.push_back(greyImages[i]);
-#                     captures.push_back(greyImages[i+1]);
-#                     captures.push_back(greyImages[i+2]);
-#
-#             sinus.computePhaseMap(captureImages)
-#             sinus.unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, camSize, shadowMask);
-#
-#                     phaseUnwrappingunwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, shadowMask);
-#                     Mat reliabilities, reliabilities8;
-#                     phaseUnwrapping->getInverseReliabilityMap(reliabilities);
-#                     reliabilities.convertTo(reliabilities8, CV_8U, 255,128);
-#                     ostringstream tt;
-#                     tt << i;
-#                     imwrite(reliabilitiesPath + "rel_{}".format(i) + ".png", reliabilities8);
-#
-#                     if( !outputUnwrappedPhasePath.empty() )
-#                     {
-#                         ostringstream name;
-#                         name << i;
-#                         imwrite(outputUnwrappedPhasePath + "_FTP_" + name.str() + ".png", unwrappedPhaseMap8);
-#                     }
-#                     if( !outputWrappedPhasePath.empty() )
-#                     {
-#                         ostringstream name;
-#                         name << i;
-#                         imwrite(outputWrappedPhasePath + "_FTP_" + name.str() + ".png", wrappedPhaseMap8);
-#                     }
-#                 }
-#                 break;
-#
-#     else:
-#
-#         captures=[];
-#         for j in range(0,3):
-#             captures.append(greyImages[i+j]);
-#
-#         # Wrap/Unwrap ------------
-#         wrappedPhaseMap, shadowMask = sinus.computePhaseMap(captures)
-#         print("wrappedPhaseMap succes!")
-#         wrappedPhaseMapScaled = convertScaleAbs(wrappedPhaseMap, 1.0, 128)
-#         wrappedPhaseMap8 = wrappedPhaseMapScaled.astype(np.uint8)
-#         shadowMaskScaled = convertScaleAbs(shadowMask, 1.0, 128)
-#         shadowMask8 = shadowMaskScaled.astype(np.uint8)
-#         # ----------------------
-#
-#         # Enregistrement ------------
-#         # Wrapped Phase Map
-#         if( params.methodId == structured_light.PSP ):
-#             imwrite(outputWrappedPath + "_PSP_{}".format(i) + ".png", wrappedPhaseMap8);
-#         else:
-#             imwrite(outputWrappedPath + "_FAPS_{}".format(i)  + ".png", wrappedPhaseMap8);
-#         # ShadowMask
-#         if( params.methodId == structured_light.PSP ):
-#             imwrite(outputWrappedPath + "sm_PSP_{}".format(i) + ".png", shadowMask8);
-#         else:
-#             imwrite(outputWrappedPath + "sm_FAPS_{}".format(i)  + ".png", shadowMask8);
-#         # Capture images
-#         if( params.methodId == structured_light.PSP ):
-#             imwrite(outputCapturePath + "_PSP_{}".format(i)+ ".png", captureImages[i]);
-#         else:
-#             imwrite(outputCapturePath + "_FAPS_{}".format(i) + ".png", captureImages[i]);
-#         if( i == nbrOfImages - 3 ):
-#             if( params.methodId == structured_light.PSP ):
-#                 nameBis = i+1;
-#                 nameTer = i+2;
-#                 imwrite(outputCapturePath + "_PSP_{}".format(nameBis) + ".png", captureImages[i+1]);
-#                 imwrite(outputCapturePath + "_PSP_{}".format(nameTer) + ".png", captureImages[i+2]);
-#             else:
-#                 nameBis = i+1;
-#                 nameTer = i+2;
-#                 imwrite(outputCapturePath + "_FAPS_{}".format(nameBis)+ ".png", captureImages[i+1]);
-#                 imwrite(outputCapturePath + "_FAPS_{}".format(nameTer) + ".png", captureImages[i+2]);
-#         print("saved")
-#         # ----------------------
-#
-#         # Unwrap ---------------
-#         sinus.unwrapPhaseMap(wrappedPhaseMap, camSize, shadowMask)
-#         print("unwrappedPhaseMap succes!")
-#         unwrappedPhaseMapScaled = convertScaleAbs(unwrappedPhaseMap, 255, 128)
-#         unwrappedPhaseMap8 = unwrappedPhaseMapScaled.astype(np.uint8)
-#         # ----------------------
-#
-#         # Enregistrement ------------
-#         # Unwrapped Phase Map
-#         if( params.methodId == structured_light.PSP ):
-#             imwrite(outputUnwrappedPath + "_PSP_{}".format(i) + ".png", unwrappedPhaseMap8);
-#         else:
-#             imwrite(outputUnwrappedPath + "_FAPS_{}".format(i)  + ".png", unwrappedPhaseMap8);
-#         # --------------------------
-#
-#
-# print("Done")
-# --------------------------------------------------------------------
+#--------------------------------------------------------------------
+
+# UNWRAPPING  -------------------------------------------------------
+camSize = (captureImages[0].shape[0],captureImages[0].shape[1] )
+paramsUnwrapping = phase_unwrapping_HistogramPhaseUnwrapping_Params()
+paramsUnwrapping.height=projector_heigth;
+paramsUnwrapping.width=projector_width;
+phaseUnwrapping= phase_unwrapping_HistogramPhaseUnwrapping.create(paramsUnwrapping)
+
+
+
+for  i in range( 1, nbrOfImages - 2):
+    print('allo')
+
+        if params.methodId == structured_light.FTP:
+
+            for( i in range( 0, nbrOfImages) ):
+                #We need three images to compute the shadow mask, as described in the reference paper
+                # even if the phase map is computed from one pattern only
+                captures=[]
+                if( i == nbrOfImages - 2 ):
+                    captures.append(greyImages[i]);
+                    captures.append(greyImages[i-1]);
+                    captures.append(greyImages[i+1]);
+                else if( i == nbrOfImages - 1 ):
+                    captures.push_back(greyImages[i]);
+                    captures.push_back(greyImages[i-1]);
+                    captures.push_back(greyImages[i-2]);
+                else:
+                    captures.push_back(greyImages[i]);
+                    captures.push_back(greyImages[i+1]);
+                    captures.push_back(greyImages[i+2]);
+
+            sinus.computePhaseMap(captureImages)
+            sinus.unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, camSize, shadowMask);
+
+                    phaseUnwrappingunwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, shadowMask);
+                    Mat reliabilities, reliabilities8;
+                    phaseUnwrapping->getInverseReliabilityMap(reliabilities);
+                    reliabilities.convertTo(reliabilities8, CV_8U, 255,128);
+                    ostringstream tt;
+                    tt << i;
+                    imwrite(reliabilitiesPath + "rel_{}".format(i) + ".png", reliabilities8);
+
+                    if( !outputUnwrappedPhasePath.empty() )
+                    {
+                        ostringstream name;
+                        name << i;
+                        imwrite(outputUnwrappedPhasePath + "_FTP_" + name.str() + ".png", unwrappedPhaseMap8);
+                    }
+                    if( !outputWrappedPhasePath.empty() )
+                    {
+                        ostringstream name;
+                        name << i;
+                        imwrite(outputWrappedPhasePath + "_FTP_" + name.str() + ".png", wrappedPhaseMap8);
+                    }
+                }
+                break;
+
+    else:
+
+        captures=[];
+        for j in range(0,3):
+            captures.append(greyImages[i+j]);
+
+        # Wrap/Unwrap ------------
+        wrappedPhaseMap, shadowMask = sinus.computePhaseMap(captures)
+        print("wrappedPhaseMap succes!")
+        wrappedPhaseMapScaled = convertScaleAbs(wrappedPhaseMap, 1.0, 128)
+        wrappedPhaseMap8 = wrappedPhaseMapScaled.astype(np.uint8)
+        shadowMaskScaled = convertScaleAbs(shadowMask, 1.0, 128)
+        shadowMask8 = shadowMaskScaled.astype(np.uint8)
+        # ----------------------
+
+        # Enregistrement ------------
+        # Wrapped Phase Map
+        if( params.methodId == structured_light.PSP ):
+            imwrite(outputWrappedPath + "_PSP_{}".format(i) + ".png", wrappedPhaseMap8);
+        else:
+            imwrite(outputWrappedPath + "_FAPS_{}".format(i)  + ".png", wrappedPhaseMap8);
+        # ShadowMask
+        if( params.methodId == structured_light.PSP ):
+            imwrite(outputWrappedPath + "sm_PSP_{}".format(i) + ".png", shadowMask8);
+        else:
+            imwrite(outputWrappedPath + "sm_FAPS_{}".format(i)  + ".png", shadowMask8);
+        # Capture images
+        if( params.methodId == structured_light.PSP ):
+            imwrite(outputCapturePath + "_PSP_{}".format(i)+ ".png", captureImages[i]);
+        else:
+            imwrite(outputCapturePath + "_FAPS_{}".format(i) + ".png", captureImages[i]);
+        if( i == nbrOfImages - 3 ):
+            if( params.methodId == structured_light.PSP ):
+                nameBis = i+1;
+                nameTer = i+2;
+                imwrite(outputCapturePath + "_PSP_{}".format(nameBis) + ".png", captureImages[i+1]);
+                imwrite(outputCapturePath + "_PSP_{}".format(nameTer) + ".png", captureImages[i+2]);
+            else:
+                nameBis = i+1;
+                nameTer = i+2;
+                imwrite(outputCapturePath + "_FAPS_{}".format(nameBis)+ ".png", captureImages[i+1]);
+                imwrite(outputCapturePath + "_FAPS_{}".format(nameTer) + ".png", captureImages[i+2]);
+        print("saved")
+        # ----------------------
+
+        # Unwrap ---------------
+        sinus.unwrapPhaseMap(wrappedPhaseMap, camSize, shadowMask)
+        print("unwrappedPhaseMap succes!")
+        unwrappedPhaseMapScaled = convertScaleAbs(unwrappedPhaseMap, 255, 128)
+        unwrappedPhaseMap8 = unwrappedPhaseMapScaled.astype(np.uint8)
+        # ----------------------
+
+        # Enregistrement ------------
+        # Unwrapped Phase Map
+        if( params.methodId == structured_light.PSP ):
+            imwrite(outputUnwrappedPath + "_PSP_{}".format(i) + ".png", unwrappedPhaseMap8);
+        else:
+            imwrite(outputUnwrappedPath + "_FAPS_{}".format(i)  + ".png", unwrappedPhaseMap8);
+        # --------------------------
+
+
+print("Done")
+--------------------------------------------------------------------

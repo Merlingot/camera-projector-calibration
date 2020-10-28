@@ -19,12 +19,12 @@ int main(int argc, char **argv)
     structured_light::SinusoidalPattern::Params params;
     phase_unwrapping::HistogramPhaseUnwrapping::Params paramsUnwrapping;
     // Retrieve parameters written in the command line
-    params.width = 1280;
-    params.height = 720;
-    params.nbrOfPeriods = 4;
+    params.width = 800;
+    params.height = 600;
+    params.nbrOfPeriods = 5;
     params.setMarkers = true;
     params.horizontal = true;
-    params.methodId = 0;
+    params.methodId = 1;
     params.shiftValue = static_cast<float>(2 * CV_PI / 3);
     params.nbrOfPixelsBetweenMarkers = 70;
 
@@ -41,7 +41,10 @@ int main(int argc, char **argv)
     vector<Mat> patterns;
     Mat shadowMask;
     Mat unwrappedPhaseMap, unwrappedPhaseMap8;
+    Mat unwrappedProj;
     Mat wrappedPhaseMap, wrappedPhaseMap8;
+    Mat wrappedProj;
+    Mat matches;
     //Generate sinusoidal patterns
     sinus->generate(patterns);
 
@@ -62,8 +65,8 @@ int main(int argc, char **argv)
     imshow("pattern", patterns[0]);
     // move the window to the second display
     cout << "Move window to monitor" << endl;
-    int width_first  = 2880;
-    int height_first = 1800;
+    int width_first  = 1440;
+    int height_first = 900;
     // waitKey(0);
     moveWindow("pattern", 0, -height_first);
     cout << "Press on the window then press any key to make window full screen and start" << endl;
@@ -78,17 +81,18 @@ int main(int argc, char **argv)
     cap >> imgw[0];
     imwrite(outputUnwrappedPhasePath + "image_sans_frange" + ".png", imgw);
 
-    int nbrOfImages = 6;
+    int nbrOfImages = 3;
     int count = 0;
     vector<Mat> img(nbrOfImages);
     Size camSize(-1, -1);
+    Size projSize(800, 600);
     while( count < nbrOfImages )
     {
         for(int i = 0; i < (int)patterns.size(); ++i )
         {
             Mat colorimg;
             imshow("pattern", patterns[i]);
-            waitKey(300);
+            waitKey(30);
             cap >> colorimg;
             cvtColor(colorimg, img[count], COLOR_BGR2GRAY);
             count += 1;
@@ -171,6 +175,7 @@ int main(int argc, char **argv)
                 captures.push_back(img[i+1]);
                 captures.push_back(img[i+2]);
                 sinus->computePhaseMap(captures, wrappedPhaseMap, shadowMask);
+
                 if( camSize.height == -1 )
                 {
                     camSize.height = img[i].rows;
@@ -181,6 +186,15 @@ int main(int argc, char **argv)
                     phase_unwrapping::HistogramPhaseUnwrapping::create(paramsUnwrapping);
                 }
                 sinus->unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, camSize, shadowMask);
+
+
+                cout << "matches" << endl;
+                sinus->computePhaseMap(patterns, wrappedProj);
+                sinus->unwrapPhaseMap(wrappedProj, unwrappedProj, projSize);
+                sinus->findProCamMatches(patterns, unwrappedPhaseMap, matches);
+                imwrite(outputPatternPath + "match" + ".png", matches);
+                
+
                 unwrappedPhaseMap.convertTo(unwrappedPhaseMap8, CV_8U, 1, 128);
                 wrappedPhaseMap.convertTo(wrappedPhaseMap8, CV_8U, 255, 128);
                 phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, shadowMask);
