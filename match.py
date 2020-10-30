@@ -4,12 +4,10 @@ import numpy as np
 from cv2 import *
 import os
 import sys
+import matplotlib.pyplot as plt
 
 
-
-# PARAMETRES (MEMES QUE POUR LA CAPTURE!)
-
-def main(folder, outputCapturePath, outputPatternPath, projector_width,projector_heigth,params, nb_patterns, periods, damiers, directions,
+def main(folder, outputCapturePath, outputPatternPath, projector_width,projector_heigth,params, nb_patterns, periods, directions,
 directions_s):
 
     # Faire les directories:
@@ -29,49 +27,57 @@ directions_s):
     #--------------------------------------------------------------------
 
     # UNWRAPPING  -------------------------------------------------------
-    nbrOfImages=3
+    unwrappedImages = []
+    for direction,d in zip(directions,directions_s):
+        params.horizontal = direction
+        for period in periods:
+            params.nbrOfPeriods=period
 
-    for damier in damiers:
-        patternImages=[]
-        captures=[]
-        for direction,d in zip(directions,directions_s):
-            params.horizontal = direction
-            for period in periods:
-                params.nbrOfPeriods=period
-                sinus=structured_light.SinusoidalPattern_create(params)
-                for i in range(0, nb_patterns):
-                    name = i + 1;
-                    patternImages.append( imread(outputPatternPath + "pattern_{}_{}_no{}".format(d, period,name) + ".png", IMREAD_GRAYSCALE));
-                    captures.append( imread(outputCapturePath+"damier_{}_pattern_{}.png".format(damier, i), IMREAD_GRAYSCALE))
-        # Wrap ------------
-        wrappedPhaseMap, shadowMask = sinus.computePhaseMap(captures)
-        # Enregistrement ------------
-        wrappedPhaseMapScaled = convertScaleAbs(wrappedPhaseMap, 1.0, 128)
-        wrappedPhaseMap8 = wrappedPhaseMapScaled.astype(np.uint8)
-        shadowMaskScaled = convertScaleAbs(shadowMask, 1.0, 128)
-        shadowMask8 = shadowMaskScaled.astype(np.uint8)
-        # ----------------------
+            # Un sinus ---------------------------------------------
+            sinus=structured_light.SinusoidalPattern_create(params)
 
-        # Unwrap ---------------
-        camSize = (captures[0].shape[0],captures[0].shape[1])
-        unwrappedPhaseMap = sinus.unwrapPhaseMap(wrappedPhaseMap, camSize, shadowMask)
-        print("unwrappedPhaseMap succes!")
-        unwrappedPhaseMapScaled = convertScaleAbs(unwrappedPhaseMap, 255, 128)
-        unwrappedPhaseMap8 = unwrappedPhaseMapScaled.astype(np.uint8)
+            patternImages=[]
+            captures=[]
+            for i in range(0, nb_patterns):
+                captures.append( imread(outputCapturePath+"capture_{}_{}_{}.png".format(d,period,i), IMREAD_GRAYSCALE))
+                patternImages.append( imread(outputPatternPath+"pattern_{}_{}_{}.png".format(d,period,i), IMREAD_GRAYSCALE))
 
-        # Match -----------------
-        projSize=(patternImages[0].shape[0],patternImages[0].shape[1])
-        projwrappedPhaseMap, projshadowMask = sinus.computePhaseMap(patternImages)
-        projunwrappedPhaseMap = sinus.unwrapPhaseMap(projwrappedPhaseMap, projSize)
-        matches	= sinus.findProCamMatches(patternImages, unwrappedPhaseMap)
+            # Bonnes Sizes:
+            camSize = (captures[0].shape[1],captures[0].shape[0])
+            projSize = (params.width,params.height)
 
-        # Wrapped
-        imwrite(outputWrappedPath + "wrapped_damier{}_{}_{}".format(damier,d,period)  + ".png", wrappedPhaseMap8);
-        # ShadowMask
-        imwrite(outputWrappedPath + "shadowMask_damier{}_{}_{}".format(damier,d,period) + ".png", shadowMask8);
-        print("saved")
-        # Unwrapped
-        imwrite(outputUnwrappedPath + "unwrapped_damier{}_{}_{}".format(damier, d, period) + ".png", unwrappedPhaseMap8);
-        # Cam matches
-        imwrite(outputMatchPath + "procamMatch{}_{}_{}".format(damier, d, period) + ".png", matches);
-        # ----------------------
+            # Projecteur
+            projwrappedPhaseMap, projshadowMask = sinus.computePhaseMap(patternImages)
+            projunwrappedPhaseMap = projwrappedPhaseMap.copy()
+            sinus.unwrapPhaseMap(projwrappedPhaseMap, projSize, projunwrappedPhaseMap, projshadowMask)
+            # Camera
+            wrappedPhaseMap, shadowMask = sinus.computePhaseMap(captures)
+            unwrappedPhaseMap = wrappedPhaseMap.copy()
+            unwrappedPhaseMap=sinus.unwrapPhaseMap(wrappedPhaseMap, camSize, unwrappedPhaseMap, shadowMask)
+            plt.imshow(unwrappedPhaseMap)
+            # Proj-Cam Match
+            matches = sinus.findProCamMatches(projunwrappedPhaseMap, unwrappedPhaseMap)
+
+
+
+
+            # Enregistrement ------------
+            wrappedPhaseMapScaled = convertScaleAbs(wrappedPhaseMap, 1.0, 128)
+            wrappedPhaseMap8 = wrappedPhaseMapScaled.astype(np.uint8)
+            shadowMaskScaled = convertScaleAbs(shadowMask, 1.0, 128)
+            shadowMask8 = shadowMaskScaled.astype(np.uint8)
+            unwrappedPhaseMapScaled = convertScaleAbs(unwrappedPhaseMap, 255, 128)
+            unwrappedPhaseMap8 = unwrappedPhaseMapScaled.astype(np.uint8)
+            unwrappedImages.append(unwrappedPhaseMap8)
+
+            # Wrapped
+            imwrite(outputWrappedPath + "wrapped_{}_{}".format(d,period)  + ".png", wrappedPhaseMap8);
+            # ShadowMask
+            imwrite(outputWrappedPath + "shadowMask_{}_{}".format(d,period) + ".png", shadowMask8);
+            # Unwrapped
+            imwrite(outputUnwrappedPath + "unwrapped_{}_{}".format(d, period) + ".png", unwrappedPhaseMap8);
+            # Cam matches
+            for m in range(len(matches)):
+                imwrite(outputMatchPath + "procamMatch_{}_{}".format(d, period,m) + ".png", matches[m]);
+            # ----------------------
+    return unwrappedImages
