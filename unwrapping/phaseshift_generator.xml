@@ -25,14 +25,14 @@
     Default value : [ 10, 3, 3, 3, 3, 3, 3, 3 ]
     -->
     <numShifts>
-      21 3 3 3 3</numShifts>
+      10 3 3 3 3</numShifts>
     <!--
     Type : vector of doubles
     Description : Periods of each sine wave
     Default value : [ 16, 32, 64, 128, 256, 512, 1024, 2048 ]
     -->
     <periods>
-      16. 31. 64.</periods>
+      16. 48. 128. 512. 1024.</periods>
     <generationMethod>
       <name>default</name>
       <param>

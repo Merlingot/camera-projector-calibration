@@ -18,13 +18,13 @@
     Description : String format used to determine the path of images to read
     Default value : ./img_%04d.png
     -->
-    <pathFormat>"/Users/mariannelado-roy/camera-projector-calibration/unwrapping/scan/img_%04d.png"</pathFormat>
+    <pathFormat>scan/img_%04d.png</pathFormat>
     <!--
     Type : int
     Description : Number of patterns to read
     Default value : 0
     -->
-    <length>66</length>
+    <length>44</length>
     <!--
     Type : int
     Description : Offset from which to start in the format
