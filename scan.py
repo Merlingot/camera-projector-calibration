@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import glob
 
 #### PARAMETRES #########################################
-SERIE_NO=2
+SERIE_NO=1
 wd="/Users/mariannelado-roy/camera-projector-calibration/"
 #########################################################
 
