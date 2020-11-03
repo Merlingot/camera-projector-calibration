@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-seriesNO=2
+seriesNO=1
 
 import matplotlib.pyplot as plt
 import numpy as np
