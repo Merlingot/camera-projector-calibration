@@ -25,7 +25,7 @@
     Default value : [ 10, 3, 3, 3, 3, 3, 3, 3 ]
     -->
     <numShifts>
-      20 10 10 10 3 3 3 3 3 3</numShifts>
+      20 10 10 10 10 3 3 3 3 3</numShifts>
     <!--
     Type : vector of doubles
     Description : Periods of each sine wave

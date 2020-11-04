@@ -29,7 +29,7 @@ def confidenceMap(sgmf, name):
     mask=red2*green2
     mask=midpoint(mask)
     mask = mask.astype("uint8")*255
-    mask =  cv2.medianBlur(mask,15)
+    mask =  cv2.medianBlur(mask,5)
 
     cv2.imwrite(name,mask)
 

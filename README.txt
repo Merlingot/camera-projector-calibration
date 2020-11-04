@@ -1,6 +1,8 @@
 Phase unwrapping:
-cl3ds_create_generator_config -m phaseshift
+cd ./unwrapping
+rm -r fringes/*
 cl3ds_generate -g phaseshift_generator.xml -o fringes/phaseshift_%03d.png
+->Changer le nombre de fringes dans phaseshift_matcher
 
 Mesures:
 changer SERIE_NO dans ./unwrapping/scan.py

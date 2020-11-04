@@ -1,4 +1,4 @@
-""" Calibration functions. See openCV documentation for ore information"""
+
 import numpy as np
 import cv2 as cv
 import glob

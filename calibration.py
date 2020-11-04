@@ -10,7 +10,7 @@ NB_CORNER_HEIGHT=4
 # Largeur d'un carré du damier en mètres (damier réel)
 squareSize = 1
 FLIP=0 # flip par rapport à y
-projDIMENSION=np.array([1880,720])
+projDIMENSION=np.array([800,600])
 
 
 def main(imgPATH, sgmfPATH, NB_CORNER_WIDTH, NB_CORNER_HEIGHT, squareSize, projDIMENSION):

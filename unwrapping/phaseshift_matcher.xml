@@ -24,7 +24,7 @@
     Description : Number of patterns to read
     Default value : 0
     -->
-    <length>136</length>
+    <length>150</length>
     <!--
     Type : int
     Description : Offset from which to start in the format
