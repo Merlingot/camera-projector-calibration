@@ -79,7 +79,7 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
             file.writelines(line)
         file.close()
 
-        
+
         return imgp
     else:
         print("Fail")
