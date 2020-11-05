@@ -1,11 +1,9 @@
 import numpy as np
 import cv2 as cv
-import glob
 import matplotlib.pyplot as plt
-import sgmf
 
 
-def detect_centers(patternSize, objp, color, gray):
+def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
     # Nombre de cercles
     points_per_row=patternSize[0]; points_per_colum=patternSize[1]
     NB=points_per_row*points_per_colum*2
@@ -69,18 +67,17 @@ def detect_centers(patternSize, objp, color, gray):
         imgp=np.concatenate((imgpR, imgpL))
         # Draw and display the corners.
         imgR = cv.drawChessboardCorners(color.copy(), patternSize, imgpR, ret)
-        cv.imwrite("centersR.png",imgR)
+        cv.imwrite("{}centersR.png".format(verifPath),imgR)
         imgL = cv.drawChessboardCorners(color.copy(), patternSize, imgpL, ret)
-        cv.imwrite("centersL.png",imgL)
+        cv.imwrite("{}centersL.png".format(verifPath),imgL)
         # write to file
-        file = open("points.txt","w")
+        file = open("{}points.txt".format(pointsPath),"w")
         for i in range(imgp.shape[0]):
-            point2d=imgp[i][0]
+            point2d=imgp[i][0] #array(array(u,v))
             point3d=objp[i]
             line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2d[0]), "{} \n".format(point2d[1]) ]
             file.writelines(line)
         file.close()
-
         return imgp
     else:
         print("Fail")

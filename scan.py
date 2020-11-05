@@ -6,6 +6,8 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import glob
+# Personal modules
+import util
 
 #### PARAMETRES #########################################
 SERIE_NO=1
@@ -21,13 +23,7 @@ outputNoFringePath=os.path.join(wd,"{}nofringe/".format(datafolder))
 outputCapturePath=os.path.join(wd,"{}scan_3channels/".format(datafolder))
 fringesPath=os.path.join(wd,"unwrapping/fringes/")
 output_paths = [outputNoFringePath,outputCapturePath]
-for path in output_paths:
-    if not os.path.exists(path):
-        os.makedirs(path)
-    else:
-        for file in os.scandir(path):
-            if file.name.endswith(".png"):
-                os.unlink(file.path)
+util.outputClean(output_paths)
 
 # Camera et moniteurs ----------------
 CAM_OSNUMBER=1
