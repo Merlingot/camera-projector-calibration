@@ -10,14 +10,18 @@ import glob
 import util
 
 #### PARAMETRES #########################################
-SERIE_NO=1
-wd="/Users/mariannelado-roy/camera-projector-calibration/"
+SERIE="serie_2"
+# Numéro de la caméra
+CAM_OSNUMBER=1
+# Dimension du projecteur
+projector_width = int(800); projector_heigth = int(600);
 #########################################################
 
 # Faire les directories:
+wd="/Users/mariannelado-roy/camera-projector-calibration/"
 imgName = "img_{:04d}.png"
 fringeName= "phaseshift_{:03d}.png"
-datafolder='data/serie_{}/'.format(SERIE_NO)
+datafolder='data/{}/'.format(SERIE)
 
 outputNoFringePath=os.path.join(wd,"{}nofringe/".format(datafolder))
 outputCapturePath=os.path.join(wd,"{}scan_3channels/".format(datafolder))
@@ -25,13 +29,8 @@ fringesPath=os.path.join(wd,"unwrapping/fringes/")
 output_paths = [outputNoFringePath,outputCapturePath]
 util.outputClean(output_paths)
 
-# Camera et moniteurs ----------------
-CAM_OSNUMBER=1
-# Dimensions du first monitor
+# Dimensions du first monitor (MacBook)
 monitor_width = int(1440); monitor_heigth = int(900);
-# Dimensions du first monitor
-projector_width = int(800) ; projector_heigth = int(600);
-
 
 # -----------------------------------------------------------------------------
 # Lire les patterns :
@@ -57,7 +56,7 @@ moveWindow("pattern", 0, -monitor_heigth);
 imshow("pattern", test_pattern);
 waitKey(0)
 setWindowProperty("pattern", WND_PROP_FULLSCREEN, WINDOW_FULLSCREEN);
-print('Enlever la souriiiiiiis! ->Enter')
+print('->Enter')
 waitKey(0)
 waitKey(1000)
 

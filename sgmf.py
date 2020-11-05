@@ -24,4 +24,4 @@ class sgmf():
         u,v = int(np.round(vecPix[0])), int(np.round(vecPix[1]))
         # INDEXATION LIGNE (v), COLONNE (u) !!!!!!
         ex, ey = self.channelX[v,u], self.channelY[v,u] #les channels
-        return np.array([ex,ey,1])
+        return np.array([ex,ey])

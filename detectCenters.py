@@ -59,10 +59,14 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
     retR, centersR = cv.findCirclesGrid(grayR, patternSize, cv.CALIB_CB_ASYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING, blobDetector, finderParams)
     retL, centersL = cv.findCirclesGrid(grayL, patternSize, cv.CALIB_CB_ASYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING, blobDetector, finderParams)
 
+    imgPoints=[]
     ret=retR*retL
     if ret == True:
         imgpR = cv.cornerSubPix(gray, centersR, patternSize, (-1,-1), criteria)
         imgpL = cv.cornerSubPix(gray, centersL, patternSize, (-1,-1), criteria)
+
+        imgPoints.append(imgpR)
+        imgPoints.append(imgpL)
 
         imgp=np.concatenate((imgpR, imgpL))
         # Draw and display the corners.
@@ -80,6 +84,6 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
         file.close()
 
 
-        return imgp
+        return imgPoints
     else:
         print("Fail")
