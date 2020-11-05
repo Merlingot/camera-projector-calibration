@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-seriesNO=1
+SERIE="serie_2"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,4 +37,4 @@ def confidenceMap(sgmf, name):
 
 
 
-confidenceMap("data/serie_{}/cam_match.png".format(seriesNO), 'data/serie_{}/shadowMask.png'.format(seriesNO))
+confidenceMap("data/{}/cam_match.png".format(SERIE), 'data/serie_{}/shadowMask.png'.format(seriesNO))
