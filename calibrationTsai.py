@@ -4,58 +4,78 @@ import cv2 as cv
 import glob
 import matplotlib.pyplot as plt
 import sgmf
+# from tsai import calibrate
+# from blob import detect_centers
+from circlesgrid import getAsymCirclesObjPoints
 
-# Nombre de coins internes du damier
+def T(d,a):
+    return np.array([a,0,a+d])
+
+def Ry(o):
+    R = np.zeros((3,3))
+    R[0,0]=np.cos(o)
+    R[0,2]=np.sin(o)
+    R[1,1]=1
+    R[2,0]=-np.sin(o)
+    R[2,2]=np.cos(o)
+    return R
+
+# Damier
+points_per_row=4; points_per_colum=11
 patternSize = (points_per_row, points_per_colum)
-# Largeur d'un carré du damier en mètres (damier réel)
-squareSize = 1
-FLIP=0 # flip par rapport à y
+circleDiameter=1.5e-2
+circleSpacing=2e-2
+d = (points_per_row-1)
+# Points 3d
+objp1 = getAsymCirclesObjPoints(points_per_colum, points_per_row, 1, 0, 0, "xy")
+objp2 = getAsymCirclesObjPoints(points_per_colum, points_per_row, 1, d, 0, "yz")
+objp=np.concatenate((objp1, objp2))
 #Résolution du projecteur en pixel
 projSize=(800,600)
 
+detect_centers(patternSize, objp, color, gray)
 
 
+#
+# def main(imgPATH, sgmfPATH, patternSize, projSize, objp):
+"""
+Args:
+    imgPath :       path to camera image directory
+    sgmfPath :      path to sgmf directory
+    patternSize :   tuple
+                    (number of circles in the left/right direction, number of circles in the up/down direction)
+    projSize:       tuple (width, height)
+                    Projector's resolution in pixel
+    objp :          array(array(x,y,z))
+                    Coordonnées des centres des cercles sur la grille
+"""
 
-def main(imgPATH, sgmfPATH, patternSize, projSize, objp):
-    """
-    Args:
-        imgPath :       path to camera image directory
-        sgmfPath :      path to sgmf directory
-        patternSize :   tuple
-                        (number of circles in the left/right direction, number of circles in the up/down direction)
-        projSize:       tuple (width, height)
-                        Projector's resolution in pixel
-        objp :          array(array(x,y,z))
-                        Coordonnées des centres des cercles sur la grille
-    """
+# Nom des images dans une liste
+fnames = glob.glob(imgPath)
+sgmfnames = glob.glob(sgmfPath)
 
-    # Nom des images dans une liste
-    fnames = glob.glob(imgPath)
-    sgmfnames = glob.glob(sgmfPath)
+if (len(fnames)>0 and len(sgmfnames)>0) :
+    # lire les images
+    color=cv.imread(fnames[0])
+    gray = cv.cvtColor(color , cv.COLOR_BGR2GRAY)
+    # sgmf = sgmf.sgmf(sgmfnames[0], projSize, shadowMaskName=None)
 
-    if (len(fnames)>0 and len(sgmfnames)>0) :
-        # lire les images
-        for fname,sgmfname in zip(fnames, sgmfnames):
-            gray = cv.cvtColor(cv.imread(fname) , cv.COLOR_BGR2GRAY)
-            sgmf = sgmf.sgmf(sgmfname, projSize, shadowMaskName=None)
+detect_centers(patternSize, objp, color, gray)
 
+    # 1. Calibration intrinsèque de la caméra:
 
-        # 1. Calibration intrinsèque de la caméra:
-        objectPoints, imagePoints, cameraMatrix, camDistCoeffs = cam_intrinsic(patternSize, objp.copy(), gray)
+    objectPoints, imagePoints = detect_centers()
 
-        # 2. Extraction des coordonées des points dans le plan image du projecteur
-        projPoints=get_projPoints(sgmf, imagePoints, objp.copy())
+    # 2. Extraction des coordonées des points dans le plan image du projecteur
+    projPoints=get_projPoints(sgmf, imagePoints, objp.copy())
 
-        # 3. Calibration intrinsèque du projecteur
-        projMatrix, projDistCoeffs = proj_intrinsic(objectPoints, projPoints, projSize)
+    # 3. Calibration intrinsèque du projecteur
+    projMatrix, projDistCoeffs = proj_intrinsic(objectPoints, projPoints, projSize)
 
-        # 4. Calibration stereo
-        imageSize=gray.shape
-        retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors, flags = cv.stereoCalibrateExtended(objectPoints, imagePoints, projoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize)
+    # 4. Calibration stereo
+    imageSize=gray.shape
+    retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors, flags = cv.stereoCalibrateExtended(objectPoints, imagePoints, projoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize)
 
-        return R, T
-    else :
-        print('No images found')
 
 
 
