@@ -78,6 +78,8 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
             line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2d[0]), "{} \n".format(point2d[1]) ]
             file.writelines(line)
         file.close()
+
+        
         return imgp
     else:
         print("Fail")
