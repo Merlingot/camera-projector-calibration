@@ -1,6 +1,8 @@
 #!/usr/local/bin/python3
 
-SERIE="serie_2"
+# RUN FROM /unwrapping DIRECTORY ONLY
+
+SERIE="serie_1"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,4 +39,4 @@ def confidenceMap(sgmf, name):
 
 
 
-confidenceMap("data/{}/cam_match.png".format(SERIE), 'data/serie_{}/shadowMask.png'.format(seriesNO))
+confidenceMap("../data/{}/cam_match.png".format(SERIE), '../data/{}/shadowMask.png'.format(SERIE))
