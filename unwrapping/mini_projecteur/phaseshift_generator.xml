@@ -10,7 +10,7 @@
     Default value : 800x600
     -->
     <size>
-      1920 1200</size>
+      800 600</size>
     <!--
     Type : int
     Valid values : [ 1, 2, 3 ]

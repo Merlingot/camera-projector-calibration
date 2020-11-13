@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<matcher>
+  <name>phaseshift</name>
+  <param>
+    <generator>
+      <configFilePath_>phaseshift_generator.xml</configFilePath_>
+      <configNodeName_>generator</configNodeName_></generator>
+    <unwrappingMethod>
+      <name>allFrequencies</name>
+      <param>
+        </param></unwrappingMethod></param></matcher>
+<camGenerator>
+  <name>seqreader</name>
+  <param>
+    <!--
+    Type : string
+    Description : String format used to determine the path of images to read
+    Default value : ./img_%04d.png
+    -->
+    <pathFormat>scan/img_%04d.png</pathFormat>
+    <!--
+    Type : int
+    Description : Number of patterns to read
+    Default value : 0
+    -->
+    <length>150</length>
+    <!--
+    Type : int
+    Description : Offset from which to start in the format
+    Default value : 0
+    -->
+    <offset>0</offset>
+    <!--
+    Type : int
+    Description : Steps between name of two images in the format
+    Default value : 1
+    -->
+    <step>1</step></param></camGenerator>
+<projGenerator>
+  <name>dummy</name>
+  <param>
+    </param></projGenerator>
+</opencv_storage>

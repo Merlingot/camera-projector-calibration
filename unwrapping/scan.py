@@ -14,7 +14,7 @@ SERIE="serie_2"
 # Numéro de la caméra
 CAM_OSNUMBER=1
 # Dimension du projecteur
-projector_width = int(800); projector_heigth = int(600);
+projector_width = int(1920); projector_heigth = int(1200);
 #########################################################
 
 # Faire les directories:

@@ -11,6 +11,10 @@ from detectCenters import detect_centers
 from circlesgrid import getAsymCirclesObjPoints
 import util
 
+#Résolution du projecteur en pixel
+projSize=(800,600)
+
+
 # Data:
 SERIE="serie_1"
 dataPath="data/{}/".format(SERIE)
@@ -28,9 +32,6 @@ color=cv.imread(noFringePath)
 gray = cv.cvtColor(color , cv.COLOR_BGR2GRAY)
 # Résolution caméra:
 imageSize=gray.shape
-
-#Résolution du projecteur en pixel
-projSize=(800,600)
 
 # Damier
 points_per_row=4; points_per_colum=11
