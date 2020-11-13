@@ -1,4 +1,5 @@
 #!/usr/local/bin/python3
+# RUN FROM /unwrapping DIRECTORY ONLY
 
 import numpy as np
 from cv2 import *
@@ -10,15 +11,17 @@ import glob
 import util
 
 #### PARAMETRES #########################################
-SERIE="serie_2"
+SERIE="serie_3"
 # Numéro de la caméra
 CAM_OSNUMBER=1
 # Dimension du projecteur
 projector_width = int(1920); projector_heigth = int(1200);
+# Dimensions du first monitor (MacBook)
+monitor_width = int(1440); monitor_heigth = int(900);
+# Faire les directories:
+wd="../camera-projector-calibration/"
 #########################################################
 
-# Faire les directories:
-wd="/Users/mariannelado-roy/camera-projector-calibration/"
 imgName = "img_{:04d}.png"
 fringeName= "phaseshift_{:03d}.png"
 datafolder='data/{}/'.format(SERIE)
@@ -29,8 +32,6 @@ fringesPath=os.path.join(wd,"unwrapping/fringes/")
 output_paths = [outputNoFringePath,outputCapturePath]
 util.outputClean(output_paths)
 
-# Dimensions du first monitor (MacBook)
-monitor_width = int(1440); monitor_heigth = int(900);
 
 # -----------------------------------------------------------------------------
 # Lire les patterns :
