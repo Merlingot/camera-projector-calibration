@@ -1,5 +1,6 @@
 # Check if build/ dir exists.
-cd /Users/mariannelado-roy/camera-projector-calibration/unwrapping
+
+# RUN FROM /unwrapping DIRECTORY ONLY
 
 python3 channelFix.py
 
