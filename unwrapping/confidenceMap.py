@@ -2,7 +2,7 @@
 
 # RUN FROM /unwrapping DIRECTORY ONLY
 
-SERIE="serie_1"
+SERIE="serie_3"
 
 import matplotlib.pyplot as plt
 import numpy as np
