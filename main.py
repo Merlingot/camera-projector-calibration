@@ -6,21 +6,27 @@ import glob
 import matplotlib.pyplot as plt
 
 # Personal imports :
-import sgmf
+from sgmf import sgmf
 from detectCenters import detect_centers
 from circlesgrid import getAsymCirclesObjPoints
-import util
+import unwrapping.util as util
 
-#Résolution du projecteur en pixel
-projSize=(800,600)
-
-
+# Paramètres =============================================================
+# Résolution du projecteur en pixel
+projSize=(1920,1200)
 # Data:
-SERIE="serie_1"
+SERIE="13_11_2020/serie_gp_1"
+# Damier
+points_per_row=8; points_per_colum=8
+circleDiameter=10e-2
+circleSpacing=20e-2
+paperMargin = 20e-2 # À trouver
+# ========================================================================
+
+# Paths:
 dataPath="data/{}/".format(SERIE)
 noFringePath=os.path.join(dataPath, "nofringe/noFringe.png")
 sgmfPath=os.path.join(dataPath, "cam_match.png")
-
 verifPath=os.path.join(dataPath,"verif/")
 pointsPath=os.path.join(dataPath,"points/")
 output_paths=[verifPath, pointsPath]
@@ -34,14 +40,10 @@ gray = cv.cvtColor(color , cv.COLOR_BGR2GRAY)
 imageSize=gray.shape
 
 # Damier
-points_per_row=4; points_per_colum=11
 patternSize = (points_per_row, points_per_colum)
 realPatternSize=(2*points_per_row, points_per_colum)
-circleDiameter=1.5e-2
-circleSpacing=2e-2
-paperMargin = 3e-2 #À trouver
-offset=paperMargin+(circleSpacing+circleDiameter)/2
 # Points 3d
+offset=paperMargin+(circleSpacing+circleDiameter)/2
 objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
 objpL = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "yz")
 objp=np.concatenate((objpR, objpL))
@@ -74,22 +76,17 @@ objp=np.concatenate((objpR, objpL))
 
 
 
-# Détecter les coins  ----------------------------------
+# Détecter les centres ----------------------------------
 imagePoints=detect_centers(patternSize, objp, color, gray, verifPath, pointsPath)
 objectPoints=[objpR.astype(np.float32), objpL.astype(np.float32)]
-# Format de imgPoints et objPoints (pour la calibration) À CORRIGER
-objPoints=[objpR.astype(np.float32)]
-imgPoints=[imagePoints[0]]
-
-# plt.figure()
-# plt.title('vérification cercles')
-# plt.imshow(gray)
-# plt.plot( imgPoints[0][:,0,0], imgPoints[0][:,0,1] )
 
 
 # Calibration de la caméra (estimation)  ----------------------------------
+# Format de imgPoints et objPoints (pour la calibration) À CORRIGER
+objPoints=[objpR.astype(np.float32)]
+imgPoints=[imagePoints[0]]
+# calibrateCamera
 ret, cameraMatrix, camDistCoeffs, _, _ = cv.calibrateCamera(objPoints, imgPoints, gray.shape[::-1],None,None)
-
 
 def draw(img, origin, imgpts):
     img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[0].ravel()), (255,0,0), 5) #X
@@ -143,8 +140,9 @@ plt.savefig('{}superposionSGMF.png'.format(verifPath))
 # Calibration du projecteur
 ret, projMatrix, projDistCoeffs, prvecs, ptvecs = cv.calibrateCamera(objPoints, projPoints, gray.shape[::-1],None,None)
 
-# Calibration stéréo  ----------------------------------
 
+
+# Calibration stéréo  ----------------------------------
 projectorPoints=[ projPoints[0], get_projPoints(SGMF, imagePoints[1])[0] ]
 plt.figure()
 plt.title('Points plan image projecteur trouvés avec sgmf')

@@ -2,7 +2,7 @@
 
 # RUN FROM /unwrapping DIRECTORY ONLY
 
-SERIE="serie_3"
+SERIE="serie_gp_1"
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,7 +36,6 @@ def confidenceMap(sgmf, name):
     cv2.imwrite(name,mask)
 
     return 0
-
 
 
 confidenceMap("../data/{}/cam_match.png".format(SERIE), '../data/{}/shadowMask.png'.format(SERIE))

@@ -31,7 +31,7 @@ def getAsymCirclesObjPoints(rows, cols, spacing, xoffset, yoffset, flag="2d", zv
                 pts.append([zvalue, ypos, xpos])
     else:
         xstart = (2.0 * cols - 1.0) * spacing
-        print("xstart", xstart)
+        # print("xstart", xstart)
         for y in range(0, rows):
             ypos = y * spacing + yoffset
             for x in range(0, cols):

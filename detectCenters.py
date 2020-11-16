@@ -16,29 +16,34 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
 
     # SimpleBlobDetector parameters
     blobParams = cv.SimpleBlobDetector_Params()
-    # Change thresholds
+    # Thresholds
     blobParams.minThreshold = 8
     blobParams.maxThreshold = 255
-    # Filter by Area.
+    # # Filter by Area.
     blobParams.filterByArea = True
-    blobParams.minArea = 100    # minArea may be adjusted to suit for your experiment
-    blobParams.maxArea = 750   # maxArea may be adjusted to suit for your experiment
+    blobParams.minArea = 200    # minArea may be adjusted to suit experiment
+    blobParams.maxArea = 10000
     # Filter by Circularity
     blobParams.filterByCircularity = True
-    blobParams.minCircularity = 0.1
+    blobParams.minCircularity = 0.8
+    blobParams.maxCircularity = np.inf
     # Filter by Convexity
     blobParams.filterByConvexity = True
-    blobParams.minConvexity = 0.87
+    blobParams.minConvexity = 0.9
+    blobParams.maxConvexity = np.inf
     # Filter by Inertia
     blobParams.filterByInertia = True
     blobParams.minInertiaRatio = 0.01
+    blobParams.maxInertiaRatio = np.inf
     # Create a detector with the parameters
     blobDetector = cv.SimpleBlobDetector_create(blobParams)
 
     # Detect centers
     keypoints = blobDetector.detect(gray) # Detect blobs.
-    im_with_keypoints = cv.drawKeypoints(gray, keypoints, np.array([]), (255,0,0), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    im_with_keypoints = cv.drawKeypoints(gray.copy(), keypoints, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
     im_with_keypoints_gray = cv.cvtColor(im_with_keypoints, cv.COLOR_BGR2GRAY)
+    cv.imwrite("{}blobDetected.png".format(verifPath),im_with_keypoints)
+
 
     x = []
     for i in range(len(keypoints)):
@@ -46,18 +51,32 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
     mean = np.mean(np.array(x))
 
     # Mask :
-    xIndex = np.zeros((gray.shape[0],1))
-    for i in range(1,gray.shape[1]):
-        row = np.ones((gray.shape[0],1))*i
-        xIndex = np.concatenate((xIndex, row ), axis=1)
-    maskR=xIndex>mean
-    maskL=xIndex<mean
+    xIndex = np.indices(gray.shape)[1]
+
+    maskR=xIndex>mean*0.975
+    maskL=xIndex<mean*1.025
     grayR=gray*maskR
     grayL=gray*maskL
 
+    # Detect centers
+    # right
+    blobDetectorR = cv.SimpleBlobDetector_create(blobParams)
+    keypointsR = blobDetectorR.detect(grayR) # Detect blobs.
+    keypoints_colorR = cv.drawKeypoints(grayR.copy(), keypointsR, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    keypoints_grayR = cv.cvtColor(keypoints_colorR, cv.COLOR_BGR2GRAY)
+    cv.imwrite("{}blobDetectedR.png".format(verifPath),keypoints_grayR)
+    #left
+    blobDetectorL = cv.SimpleBlobDetector_create(blobParams)
+    keypointsL = blobDetector.detect(grayL) # Detect blobs.
+    keypoints_colorL = cv.drawKeypoints(grayL.copy(), keypointsL, np.array([]), (0,0,255), cv.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
+    keypoints_grayL = cv.cvtColor(keypoints_colorL, cv.COLOR_BGR2GRAY)
+    cv.imwrite("{}blobDetectedL.png".format(verifPath),keypoints_grayL)
+
     # Find circles
-    retR, centersR = cv.findCirclesGrid(grayR, patternSize, cv.CALIB_CB_ASYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING, blobDetector, finderParams)
-    retL, centersL = cv.findCirclesGrid(grayL, patternSize, cv.CALIB_CB_ASYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING, blobDetector, finderParams)
+    retR, centersR = cv.findCirclesGrid(keypoints_grayR, patternSize,cv.CALIB_CB_SYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING, blobDetectorR, finderParams)
+    retL, centersL = cv.findCirclesGrid(keypoints_grayL, patternSize, cv.CALIB_CB_SYMMETRIC_GRID + cv.CALIB_CB_CLUSTERING, blobDetectorL, finderParams)
+
+
 
     imgPoints=[]
     ret=retR*retL
