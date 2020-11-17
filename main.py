@@ -6,7 +6,8 @@ import glob
 import matplotlib.pyplot as plt
 
 # Personal imports :
-from sgmf import sgmf
+import sgmf
+import tsai
 from detectCenters import detect_centers
 from circlesgrid import getAsymCirclesObjPoints
 import unwrapping.util as util
@@ -20,7 +21,7 @@ SERIE="13_11_2020/serie_gp_1"
 points_per_row=8; points_per_colum=8
 circleDiameter=10e-2
 circleSpacing=20e-2
-paperMargin = 20e-2 # À trouver
+paperMargin=20e-2 # À trouver
 # ========================================================================
 
 # Paths:
@@ -71,52 +72,20 @@ objp=np.concatenate((objpR, objpL))
 # ax.set_title('Damier complet vue de haut')
 # ax.set_xlabel('x (m)')
 # ax.set_ylabel('z (m)')
+# ax.set_aspect('equal')
 # ax.plot(objp[:,0], objp[:,2],'o')
 # plt.savefig('{}damier_vue_haut.png'.format(verifPath), format="png")
 
 
 
-# Détecter les centres ----------------------------------
-imagePoints=detect_centers(patternSize, objp, color, gray, verifPath, pointsPath)
+# Centre des cercles dans les deux images (cam et projecteur) -----------------
+# 1. Points dans le référentiel monde
 objectPoints=[objpR.astype(np.float32), objpL.astype(np.float32)]
 
+# 2. Détection des centres dans l'image de la caméra
+imagePoints, imgp = detect_centers(patternSize, color, gray, verifPath)
 
-# Calibration de la caméra (estimation)  ----------------------------------
-# Format de imgPoints et objPoints (pour la calibration) À CORRIGER
-objPoints=[objpR.astype(np.float32)]
-imgPoints=[imagePoints[0]]
-# calibrateCamera
-ret, cameraMatrix, camDistCoeffs, _, _ = cv.calibrateCamera(objPoints, imgPoints, gray.shape[::-1],None,None)
-
-def draw(img, origin, imgpts):
-    img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[0].ravel()), (255,0,0), 5) #X
-    img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[1].ravel()), (0,255,0), 5)
-    img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[2].ravel()), (0,0,255), 5)
-    return img
-
-# Vérification de la calibration de la caméra en reprojection:
-# Montrer axes
-axis = np.float32([[3,0,0], [0,3,0], [0,0,3]]).reshape(-1,3)*1e-1
-ret, rvecs, tvecs = cv.solvePnP(objPoints[0], imgPoints[0], cameraMatrix, camDistCoeffs)
-axisProj, jac = cv.projectPoints(axis, rvecs, tvecs, cameraMatrix, camDistCoeffs)
-origin = np.float32([[0,0,0]]).reshape(-1,1)
-originProj , jac = cv.projectPoints(origin, rvecs, tvecs, cameraMatrix, camDistCoeffs)
-img = draw(color.copy(), originProj[0], axisProj)
-cv.imwrite('{}reprojection_axes.png'.format(verifPath), img)
-# À droite
-pts = objpR.astype(np.float32)
-ptsProj, jac = cv.projectPoints(pts, rvecs, tvecs, cameraMatrix, camDistCoeffs)
-img = cv.drawChessboardCorners(color.copy(), patternSize, ptsProj, 1)
-cv.imwrite('{}reprojection_droite.png'.format(verifPath), img)
-# À gauche
-pts = objpL.astype(np.float32)
-ptsProj, jac = cv.projectPoints(pts, rvecs, tvecs, cameraMatrix, camDistCoeffs)
-img = cv.drawChessboardCorners(color.copy(), patternSize, ptsProj, 1)
-cv.imwrite('{}reprojection_gauche.png'.format(verifPath), img)
-
-
-
-# Calibration du projecteur -------------------------
+# 3. Extraction des coordonnées des points dans le plan image du projecteur
 def get_projPoints(sgmf, imagePoints):
     projPoints = imagePoints.copy()
     for i in range(imagePoints.shape[0]):
@@ -124,34 +93,109 @@ def get_projPoints(sgmf, imagePoints):
         # sans transformation affine:
         p=sgmf.get_value(circle)
         projPoints[i,0,:]=np.array([ np.array([p[0],p[1]]).astype(np.float32) ]) #Format bizare
-    return [projPoints]
-
-# Extraction des coordonnées des points dans le plan image du projecteur
+    return projPoints
 SGMF=sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)
-projPoints=get_projPoints(SGMF, imgPoints[0])
+projp=get_projPoints(SGMF, imgp)
 # Vérification
-plt.figure()
-plt.title('Vérification points images')
-plt.imshow(SGMF.channelX)
-plt.plot(imagePoints[0][:,0,0],imagePoints[0][:,0,1], 'o')
-plt.plot(imagePoints[1][:,0,0],imagePoints[1][:,0,1], 'o')
-plt.savefig('{}superposionSGMF.png'.format(verifPath))
+# plt.figure()
+# plt.title('Vérification points images')
+# plt.imshow(SGMF.channelX)
+# plt.plot(imagePoints[0][:,0,0],imagePoints[0][:,0,1], 'o')
+# plt.plot(imagePoints[1][:,0,0],imagePoints[1][:,0,1], 'o')
+# plt.savefig('{}superposionSGMF.png'.format(verifPath))
 
-# Calibration du projecteur
-ret, projMatrix, projDistCoeffs, prvecs, ptvecs = cv.calibrateCamera(objPoints, projPoints, gray.shape[::-1],None,None)
+# 4. Écriture dans un fichier :
+file = open("{}points.txt".format(pointsPath),"w")
+for i in range(imgp.shape[0]):
+    point2dCam=imgp[i][0] #array(array(u,v))
+    point2dProj=projp[i][0]#array(array(u,v))
+    point3d=objp[i]
+    line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} ".format(point2dCam[1]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
+    file.writelines(line)
+file.close()
 
 
 
-# Calibration stéréo  ----------------------------------
-projectorPoints=[ projPoints[0], get_projPoints(SGMF, imagePoints[1])[0] ]
-plt.figure()
-plt.title('Points plan image projecteur trouvés avec sgmf')
-plt.plot(projectorPoints[0][:,0,0], projectorPoints[0][:,0,1], 'o')
-plt.plot(projectorPoints[1][:,0,0], projectorPoints[1][:,0,1], 'o')
-plt.savefig('{}points_projecteur.png'.format(verifPath))
 
-retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended(objectPoints, imagePoints, projectorPoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Calibration de la caméra (estimation)  ----------------------------------
+# # Format de imgPoints et objPoints (pour la calibration) À CORRIGER
+# objPoints=[objpR.astype(np.float32)]
+# imgPoints=[imagePoints[0]]
+# # calibrateCamera
+# ret, cameraMatrix, camDistCoeffs, _, _ = cv.calibrateCamera(objPoints, imgPoints, gray.shape[::-1],None,None)
+#
+# #Tsai
+# dataPath="data/13_11_2020/serie_gp_1"
+# imageShape=gray.shape
+# pointsPath=os.path.join(dataPath,"points/points.txt")
+# campixelSize=(3.45e-6, 3.45e-6)
+# R, T, f = tsai.main(pointsPath, imageShape, campixelSize)
+#
+#
+# def draw(img, origin, imgpts):
+#     # BGR
+#     img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[0].ravel()), (255,0,0), 5) #X
+#     img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[1].ravel()), (0,255,0), 5)
+#     img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[2].ravel()), (0,255,255), 5) # Z en jaune
+#     return img
+#
+# # Vérification de la calibration de la caméra en reprojection:
+# # Montrer axes
+# axis = np.float32([[1,0,0], [0,1,0], [0,0,1]]).reshape(-1,3)*1
+# ret, rvecs, tvecs = cv.solvePnP(objPoints[0], imgPoints[0], cameraMatrix, camDistCoeffs)
+# axisProj, jac = cv.projectPoints(axis, rvecs, tvecs, cameraMatrix, camDistCoeffs)
+# origin = np.float32([[0,0,0]]).reshape(-1,1)
+# originProj , jac = cv.projectPoints(origin, rvecs, tvecs, cameraMatrix, camDistCoeffs)
+# img = draw(color.copy(), originProj[0], axisProj)
+# cv.imwrite('{}reprojection_axes.png'.format(verifPath), img)
+# # À droite
+# pts = objpR.astype(np.float32)
+# ptsProj, jac = cv.projectPoints(pts, rvecs, tvecs, cameraMatrix, camDistCoeffs)
+# img = cv.drawChessboardCorners(color.copy(), patternSize, ptsProj, 1)
+# cv.imwrite('{}reprojection_droite.png'.format(verifPath), img)
+# # À gauche
+# pts = objpL.astype(np.float32)
+# ptsProj, jac = cv.projectPoints(pts, rvecs, tvecs, cameraMatrix, camDistCoeffs)
+# img = cv.drawChessboardCorners(color.copy(), patternSize, ptsProj, 1)
+# cv.imwrite('{}reprojection_gauche.png'.format(verifPath), img)
+#
+#
+#
+# # Calibration du projecteur
+# ret, projMatrix, projDistCoeffs, prvecs, ptvecs = cv.calibrateCamera(objPoints, projPoints, gray.shape[::-1],None,None)
+#
+# # Calibration stéréo  ----------------------------------
+# projectorPoints=[ projPoints[0], get_projPoints(SGMF, imagePoints[1])[0] ]
+# plt.figure()
+# plt.title('Points plan image projecteur trouvés avec sgmf')
+# plt.plot(projectorPoints[0][:,0,0], projectorPoints[0][:,0,1], 'o')
+# plt.plot(projectorPoints[1][:,0,0], projectorPoints[1][:,0,1], 'o')
+# plt.savefig('{}points_projecteur.png'.format(verifPath))
+#
+# retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended(objectPoints, imagePoints, projectorPoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
 
 
 

@@ -3,7 +3,7 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 
 
-def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
+def detect_centers(patternSize, color, gray, verifPath, pointsPath=None):
     # Nombre de cercles
     points_per_row=patternSize[0]; points_per_colum=patternSize[1]
     NB=points_per_row*points_per_colum*2
@@ -86,23 +86,16 @@ def detect_centers(patternSize, objp, color, gray, verifPath, pointsPath):
 
         imgPoints.append(imgpR)
         imgPoints.append(imgpL)
+        imgp=np.concatenate((imgpR, imgpL)) #Meme format que objp
 
-        imgp=np.concatenate((imgpR, imgpL))
         # Draw and display the corners.
         imgR = cv.drawChessboardCorners(color.copy(), patternSize, imgpR, ret)
         cv.imwrite("{}centersR.png".format(verifPath),imgR)
         imgL = cv.drawChessboardCorners(color.copy(), patternSize, imgpL, ret)
         cv.imwrite("{}centersL.png".format(verifPath),imgL)
-        # write to file
-        file = open("{}points.txt".format(pointsPath),"w")
-        for i in range(imgp.shape[0]):
-            point2d=imgp[i][0] #array(array(u,v))
-            point3d=objp[i]
-            line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2d[0]), "{} \n".format(point2d[1]) ]
-            file.writelines(line)
-        file.close()
 
 
-        return imgPoints
+
+        return imgPoints, imgp
     else:
         print("Fail")
