@@ -1,6 +1,5 @@
 import os
 
-
 def outputClean(output_paths):
     for path in output_paths:
         if not os.path.exists(path):

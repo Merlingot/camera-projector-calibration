@@ -1,7 +1,0 @@
-Petit damier:
-
-résolution=(800,600)
-points_per_row=4; points_per_colum=11
-circleDiameter=1.5e-2
-circleSpacing=2e-2
-paperMargin = 3e-2
