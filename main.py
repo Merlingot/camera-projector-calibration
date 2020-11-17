@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 
 # Personal imports :
 import sgmf
-import tsai
 from detectCenters import detect_centers
 from circlesgrid import getAsymCirclesObjPoints
 import unwrapping.util as util
@@ -97,14 +96,17 @@ def main(points_per_row, points_per_colum, noFringePath, sgmfPath, verifPath, po
 
 
     # 4. Écriture dans un fichier :
-    file = open("{}points.txt".format(pointsPath),"w")
+    fileCam = open("{}points_camera.txt".format(pointsPath),"w")
+    fileProj = open("{}points_proj.txt".format(pointsPath),"w")
     for i in range(imgp.shape[0]):
         point2dCam=imgp[i][0] #array(array(u,v))
         point2dProj=projp[i][0]#array(array(u,v))
         point3d=objp[i]
-        line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} ".format(point2dCam[1]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
-        file.writelines(line)
-    file.close()
+        line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} \n ".format(point2dCam[1]) ]
+        fileCam.writelines(line)
+        line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
+        fileProj.writelines(line)
+    fileProj.close(); fileCam.close()
     return objp, imgp, projp
 
 objp, imgp, projp = main(points_per_row, points_per_colum, noFringePath, sgmfPath, verifPath, pointsPath)
