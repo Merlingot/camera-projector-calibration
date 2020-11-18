@@ -7,30 +7,10 @@ import numpy as np
 import cv2 as cv
 import glob
 
-# Personal imports :
 import sgmf
 from detectCenters import detect_centers
 from circlesgrid import getAsymCirclesObjPoints
-import unwrapping.util as util
-
-# Paramètres =============================================================
-# Résolution du projecteur en pixel
-projSize=(1920,1200)
-# Data:
-SERIE="13_11_2020/louis"
-# Damier
-points_per_row=8; points_per_colum=8
-circleDiameter=10e-2
-circleSpacing=20e-2
-paperMargin=20e-2 # À trouver
-# ========================================================================
-
-# Paths:
-dataPath="data/{}/".format(SERIE)
-noFringePath=os.path.join(dataPath, "nofringe/noFringe.png")
-sgmfPath=os.path.join(dataPath, "cam_match.png")
-verifPath=os.path.join(dataPath,"verif/")
-pointsPath=os.path.join(dataPath,"points/")
+from util import outputClean
 
 
 def get_projPoints(sgmf,imgp):
@@ -81,7 +61,7 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing,
 
     # Clean paths:
     output_paths=[verifPath, pointsPath]
-    util.outputClean(output_paths)
+    outputClean(output_paths)
 
     # Lire l'image
     color=cv.imread(noFringePath)
@@ -101,17 +81,13 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing,
         line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} \n ".format(point2dCam[1]) ]
         fileCam.writelines(line)
     fileCam.close()
-    return 0
+    return objp, imgp
 
 
 
-def proj_centers(objp, imgp, projSize, sgmfPath, verifPath, pointsPath ):
+def proj_centers(objp, imgp, projSize, sgmfPath, pointsPath):
 
-    # Clean paths:
-    output_paths=[verifPath, pointsPath]
-    util.outputClean(output_paths)
-
-    # 3. Extraction des coordonnées des points dans le plan image du projecteur
+    # Extraction des coordonnées des points dans le plan image du projecteur
     SGMF=sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)
     projp=get_projPoints(SGMF, imgp)
 

@@ -12,7 +12,7 @@ def outputClean(output_paths):
                     os.unlink(file.path)
 
 
-def draw_reprojection(color, verifPath, objPoints, imgPoints, cameraMatrix, camDistCoeffs,patternSize):
+def draw_reprojection(color, verifPath, objectPoints, imagePoints, cameraMatrix, distCoeffs, patternSize):
     def draw(img, origin, imgpts):
         # BGR
         img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[0].ravel()), (255,0,0), 5) #X
@@ -20,17 +20,19 @@ def draw_reprojection(color, verifPath, objPoints, imgPoints, cameraMatrix, camD
         img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[2].ravel()), (0,255,255), 5) # Z en jaune
         return img
 
+    objPoints=objectPoints.astype(np.float32)
+    imgPoints=imagePoints.astype(np.float32)
     # Vérification de la calibration de la caméra en reprojection:
     # Montrer axes
     axis = np.float32([[1,0,0], [0,1,0], [0,0,1]]).reshape(-1,3)*1
-    ret, rvecs, tvecs = cv.solvePnP(objPoints, imgPoints, cameraMatrix, camDistCoeffs)
-    axisProj, jac = cv.projectPoints(axis, rvecs, tvecs, cameraMatrix, camDistCoeffs)
+    ret, rvecs, tvecs = cv.solvePnP(objPoints, imgPoints, cameraMatrix, distCoeffs)
+    axisProj, jac = cv.projectPoints(axis, rvecs, tvecs, cameraMatrix, distCoeffs)
     origin = np.float32([[0,0,0]]).reshape(-1,1)
-    originProj , jac = cv.projectPoints(origin, rvecs, tvecs, cameraMatrix, camDistCoeffs)
+    originProj , jac = cv.projectPoints(origin, rvecs, tvecs, cameraMatrix, distCoeffs)
     img = draw(color.copy(), originProj[0], axisProj)
     cv.imwrite('{}reprojection_axes.png'.format(verifPath), img)
-    ptsProj, jac = cv.projectPoints(objPoints, rvecs, tvecs, cameraMatrix, camDistCoeffs)
-    img = cv.drawChessboardCorners(color.copy(), patternSize, ptsProj, 1)
+    pts, jac = cv.projectPoints(objPoints, rvecs, tvecs, cameraMatrix, distCoeffs)
+    img = cv.drawChessboardCorners(color.copy(), patternSize, pts, 1)
     cv.imwrite('{}reprojection_cercles.png'.format(verifPath), img)
 
 

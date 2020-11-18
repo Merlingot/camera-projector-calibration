@@ -4,13 +4,16 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 import os
-from calibration import calibrate
+from calibration import calibrate, draw_reprojection
 
+# Projecteur
+verifPath="data/13_11_2020/serie_gp_1/verifProjecteur/"
+color=cv.imread('data/13_11_2020/louis/nofringe/noFringe.png')
 
 # Paramètre linéaires
-pointsPath="data/13_11_2020/serie_gp_1/points/points_camera.txt"
-imageShape = (2464, 2056)
-pixelSize = (3.45e-6, 3.45e-6)
+pointsPath="data/13_11_2020/serie_gp_1/points/points_proj.txt"
+imageShape = (1920, 1200)
+pixelSize = (10e-6, 10e-6)
 data, params, R, T, f, sx = calibrate(pointsPath, imageShape, pixelSize)
 # Paramètres non linéaires
 from nonLinearSearch import nonLinearSearch
@@ -50,6 +53,8 @@ projectedPoints, _ = cv.projectPoints(objectPoints, rvec, tvec, cameraMatrix, di
 err = reprojection_err(imagePoints, projectedPoints)
 print('Mean reprojection error (pixel) - First estimate')
 print(err)
+plt.figure()
+plt.title('Reprojection')
 plt.plot(imagePoints[:,0,0], imagePoints[:,0,1], 'r.', projectedPoints[:,0,0], projectedPoints[:,0,1], 'b.')
 plt.show()
 
@@ -59,5 +64,10 @@ projectedPoints, _ = cv.projectPoints(objectPoints, rvec, tvec, cameraMatrix, di
 err = reprojection_err(imagePoints, projectedPoints)
 print('Mean reprojection error (pixel) - After non linear search')
 print(err)
+plt.figure()
+plt.title('Reprojection')
 plt.plot(imagePoints[:,0,0], imagePoints[:,0,1], 'r.', projectedPoints[:,0,0], projectedPoints[:,0,1], 'b.')
 plt.show()
+
+patternSize=(8,16)
+draw_reprojection(cv.resize(color.copy(),imageShape), verifPath, objectPoints.astype(np.float32), imagePoints.astype(np.float32), cameraMatrix, distCoeffs, patternSize)

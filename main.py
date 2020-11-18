@@ -1,112 +1,148 @@
-""" Fichier pour détecter les centres des cercles et écrire les coordonées dans un fichier .txt"""
-import os
+""" Tsai calibration """
+
 import numpy as np
 import cv2 as cv
-import glob
 import matplotlib.pyplot as plt
+import os
 
-# Personal imports :
-import sgmf
-from detectCenters import detect_centers
-from circlesgrid import getAsymCirclesObjPoints
-import unwrapping.util as util
+from findPoints import camera_centers, proj_centers
+from tsai_stage1 import calibrate
+from tsai_stage2 import nonLinearSearch
+from util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
-# Résolution du projecteur en pixel
-projSize=(1920,1200)
 # Data:
-SERIE="13_11_2020/louis"
+SERIE="13_11_2020/serie_gp_1"
+# Camera:
+imageSize = (2464, 2056)
+camPixelSize = (3.45e-6, 3.45e-6)
+# Projecteur:
+projSize=(1920,1200)
+projPixelSize = (1e-6, 1e-6)
 # Damier
 points_per_row=8; points_per_colum=8
 circleDiameter=10e-2
 circleSpacing=20e-2
 paperMargin=20e-2 # À trouver
+patternSizeFull=(points_per_colum,points_per_row*2)
 # ========================================================================
 
-# Paths:
+# Input:
 dataPath="data/{}/".format(SERIE)
-noFringePath=os.path.join(dataPath, "nofringe/noFringe.png")
+noFringePath=os.path.join(dataPath,"nofringe/noFringe.png")
 sgmfPath=os.path.join(dataPath, "cam_match.png")
-verifPath=os.path.join(dataPath,"verif/")
-pointsPath=os.path.join(dataPath,"points/")
+# Output:
+outputPath=os.path.join(dataPath,"output/")
+# Points 3d et 2d:
+pointsPath=os.path.join(outputPath,"points/")
+camPointsPath=os.path.join(pointsPath,"points_camera.txt")
+projPointsPath=os.path.join(pointsPath,"points_camera.txt")
+# Images de vérification
+verifPath=os.path.join(outputPath,"detection/")
+# Résultat de calibration
+calibPath=os.path.join(outputPath,"calibration/")
+outputfile=os.path.join(calibPath,'calibration.txt')
+# Créer/Vider les folder:
+outputClean([verifPath, pointsPath, calibPath])
 
 
-def get_projPoints(sgmf,imgp):
-    projp=imgp.copy()
-    for i in range(projp.shape[0]):
-        circle=imgp[i][0] #Format bizare
-        # transformation affine
-        srcPoints, dstPoints = get_entourage(sgmf,circle)
-        mat,_ = cv.estimateAffine2D(srcPoints, dstPoints)
-        A = np.array([[mat[0,0],mat[0,1]],[mat[1,0],mat[1,1]]]); b=mat[:,2]
-        p=A@circle + b
-        projp[i,0,:] = np.array([p.astype(np.float32)])
-        # sans transformation affine:
-        #         p=sgmf.get_value(circle)
-        #         projPoints[i,0,:]=np.array([ np.array([p[0],p[1]]).astype(np.float32)
-    return projp
+# CAMERA
+# Trouver les cercles:
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath )
+# Paramètre linéaires
+data, params, R, T, f, sx = calibrate(camPointsPath, imageSize, camPixelSize)
+# Paramètres non linéaires
+f_, Tz_, k1_, k2_= nonLinearSearch(data.world, data.realImage, R, T, f, sx)
+# Reprojection:
+imagePoints, objectPoints, rvec, tvec, cameraMatrix, camDistCoeffs=formatage(data.n, data.world, data.computerImage, params.Cx, params.Cy, params.dx, params.dy, R, T, sx, f_, Tz_, k1_, k2_)
+projectedPoints, _ = cv.projectPoints(objectPoints, rvec, tvec, cameraMatrix, camDistCoeffs)
+err = reprojection_err(imagePoints, projectedPoints)
+# Images pour le fun:
+draw_reprojection(cv.imread(noFringePath), calibPath, objectPoints, imagePoints, cameraMatrix, camDistCoeffs, patternSizeFull)
+undistort = cv.undistort(cv.imread(noFringePath), cameraMatrix, camDistCoeffs)
+cv.imwrite( '{}undistort.png'.format(outputPath), undistort )
+
+f=open(outputfile, 'w+')
+f.write('- Camera -\n\n')
+f.write('Erreur de reprojection moyenne - Après optimisation:\n')
+f.write("{}\n".format(err))
+f.write('Matrice de rotation:\n')
+f.write("{}\n".format(R))
+f.write('Vecteur translation:\n')
+f.write("{}\n".format(tvec))
+f.write('Matrice paramètres intrinsèque:\n')
+f.write("{}\n".format(cameraMatrix))
+f.write('Coefficients de distorsion:\n')
+f.write('{}\n\n'.format(camDistCoeffs))
+f.close()
+
+# Projecteur
+# Trouver les cercles:
+# imgp_undistort = cv.undistortPoints(imgp, cameraMatrix, camDistCoeffs)
+proj_centers(objp, imgp, projSize, sgmfPath, pointsPath)
+# Paramètre linéaires
+data, params, R, T, f, sx = calibrate(projPointsPath, projSize, projPixelSize)
+# Paramètres non linéaires
+f_, Tz_, k1_, k2_= nonLinearSearch(data.world, data.realImage, R, T, f, sx)
+# Reprojection:
+projectorPoints, objectPoints, rvec, tvec, projMatrix, projDistCoeffs=formatage(data.n, data.world, data.computerImage, params.Cx, params.Cy, params.dx, params.dy, R, T, sx, f_, Tz_, k1_, k2_)
+projectedPoints, _ = cv.projectPoints(objectPoints, rvec, tvec, projMatrix, projDistCoeffs)
+err = reprojection_err(projectorPoints, projectedPoints)
+
+f=open(outputfile, 'a')
+f.write('- Projecteur -\n\n')
+f.write('Erreur de reprojection moyenne - Après optimisation:\n')
+f.write("{}\n".format(err))
+f.write('Matrice de rotation:\n')
+f.write("{}\n".format(R))
+f.write('Vecteur translation:\n')
+f.write("{}\n".format(tvec))
+f.write('Matrice paramètres intrinsèque:\n')
+f.write("{}\n".format(projMatrix))
+f.write('Coefficients de distorsion:\n')
+f.write('{}\n\n'.format(projDistCoeffs))
+f.close()
+
+# # stereoCalibrate:
+retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended([objectPoints.astype(np.float32)], [imagePoints.astype(np.float32)], [projectorPoints.astype(np.float32)], cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
+
+f=open(outputfile, 'a')
+f.write('- Calibration Stéréo - \n \n')
+f.write('Erreur de reprojection moyenne:\n')
+f.write("{}\n".format(np.sum(perViewErrors)/perViewErrors.shape[0]))
+f.write('Matrice de rotation:\n')
+f.write("{}\n".format(R))
+f.write('Vecteur translation:\n')
+f.write("{}\n".format(T))
+f.write('Distance euclidienne caméra-projecteur:\n')
+f.write("{}\n\n".format(np.linalg.norm(T)))
+f.close()
 
 
-def get_entourage(sgmf, circle):
-    N=47
-    n=int((N-1)/2)
-    srcPoints=np.zeros((N**2, 2))
-    dstPoints=np.zeros((N**2, 2))
-    k=0
-    for i in range(-n,n):
-        for j in range(-n,n):
-            camPix=np.array([circle[0],circle[1],1])+np.array([i,j,0]) #coordonées homogènes
-            projPix=sgmf.get_value(camPix) #coordonées homogènes
-            srcPoints[k,:]=camPix[:2]
-            dstPoints[k,:]=projPix[:2]
-            k+=1
-    return srcPoints, dstPoints
+# StereoRectify
+R1, R2, P1, P2, Q, validPixROI1, validPixROI2=cv.stereoRectify(	cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, R, T)
+
+f=open(outputfile, 'a')
+f.write('- Rectification stéréo - \n\n')
+f.write('Matrice de rectification, Camera:\n')
+f.write("{}\n".format(R1))
+f.write('Matrice de rectification, Projecteur:\n')
+f.write("{}\n".format(R2))
+f.write('Matrice de projection, Camera:\n')
+f.write("{}\n".format(P1))
+f.write('Matrice de projection, Projecteur:\n')
+f.write("{}\n".format(P2))
+f.write('Matrice Q:\n')
+f.write("{}".format(Q))
+f.close()
 
 
-def main(points_per_row, points_per_colum, noFringePath, sgmfPath, verifPath, pointsPath ):
-
-    # Clean paths:
-    output_paths=[verifPath, pointsPath]
-    util.outputClean(output_paths)
-
-    # Lire l'image
-    color=cv.imread(noFringePath)
-    gray = cv.cvtColor(color , cv.COLOR_BGR2GRAY)
-    # Résolution caméra:
-    imageSize=gray.shape
-
-    # Damier
-    patternSize = (points_per_row, points_per_colum)
-    offset=paperMargin+(circleSpacing+circleDiameter)/2
-    objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
-    objpL = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "yz")
-    objp=np.concatenate((objpR, objpL))
 
 
-    # Centre des cercles:
-    # 1. Points dans le référentiel monde
-    # objectPoints=[objpR.astype(np.float32), objpL.astype(np.float32)]
-
-    # 2. Détection des centres dans l'image de la caméra
-    _, imgp = detect_centers(patternSize, color, gray, verifPath)
-
-    # 3. Extraction des coordonnées des points dans le plan image du projecteur
-    SGMF=sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)
-    projp=get_projPoints(SGMF, imgp)
 
 
-    # 4. Écriture dans un fichier :
-    fileCam = open("{}points_camera.txt".format(pointsPath),"w")
-    fileProj = open("{}points_proj.txt".format(pointsPath),"w")
-    for i in range(imgp.shape[0]):
-        point2dCam=imgp[i][0] #array(array(u,v))
-        point2dProj=projp[i][0]#array(array(u,v))
-        point3d=objp[i]
-        line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} \n ".format(point2dCam[1]) ]
-        fileCam.writelines(line)
-        line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
-        fileProj.writelines(line)
-    fileProj.close(); fileCam.close()
-    return objp, imgp, projp
 
-objp, imgp, projp = main(points_per_row, points_per_colum, noFringePath, sgmfPath, verifPath, pointsPath)
+
+
+
+#
