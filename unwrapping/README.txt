@@ -1,12 +1,14 @@
 # phaseshift_generator et phaseshift_matcher
 
 Faire un phaseshift_generator pour chaque projecteur.
+-> cl3ds_create_generator_config -m phaseshift
 -> Dans phaseshift_generator.xml : mettre la résolution du projecteur voulu
 -> Générer les franges
     cd ./unwrapping
-    rm -r fringes/*
+    rm -r fringes/* ou mkdir fringes
     cl3ds_generate -g phaseshift_generator.xml -o fringes/phaseshift_%03d.png
 -> Mettre le nombre de fringes dans phaseshift_matcher
+cl3ds_create_matcher_config -m phaseshift -c seqreader -p dummy
 -> Mettre la résolution du projecteur dans scan.py
 
 
