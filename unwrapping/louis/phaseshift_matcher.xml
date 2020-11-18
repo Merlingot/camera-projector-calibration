@@ -18,7 +18,7 @@
     Description : String format used to determine the path of images to read
     Default value : ./img_%04d.png
     -->
-    <pathFormat>scan/img_%04.png</pathFormat>
+    <pathFormat>scan/cam_00_%04d.png</pathFormat>
     <!--
     Type : int
     Description : Number of patterns to read

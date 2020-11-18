@@ -15,7 +15,7 @@ import unwrapping.util as util
 # Résolution du projecteur en pixel
 projSize=(1920,1200)
 # Data:
-SERIE="13_11_2020/serie_gp_1"
+SERIE="13_11_2020/louis"
 # Damier
 points_per_row=8; points_per_colum=8
 circleDiameter=10e-2
