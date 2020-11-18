@@ -1,4 +1,4 @@
-# RUN FROM /unwrapping DIRECTORY ONLY
+""" Script pour prendre des images 3 channel dans un folder <dir3channel>/scan_3channels et en produire des copies noir et blanc dans un folder <dirscan>/scan """
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -6,7 +6,14 @@ import matplotlib.pyplot as plt
 import glob
 import os
 
-scan="scan"
+## DIRECTORY a partir de /camera-projector-calibration
+#Folder ou prendre les franges noires et blanches
+dir3channels='/data/test/scan_3channels/'
+
+#Folder ou mettre les franges noires et blanches
+dirscan='/unwrapping/mini_projecteur/scan/'
+
+
 if not os.path.exists(scan):
     os.makedirs(scan)
 else:
@@ -14,14 +21,14 @@ else:
         if file.name.endswith(".png"):
             os.unlink(file.path)
 
-nb = len(glob.glob("scan_3channels/*.png"))
+nb = len(glob.glob("{}*.png".format(dir3channels)))
 
 for i in range(nb):
 
-    img3= cv.imread("scan_3channels/img_{:04d}.png".format(i))
+    img3= cv.imread("{}img_{:04d}.png".format(dir3channel,i))
 
     print("img_{:04d}.png".format(i) + "-->" + "img_{:04}.png".format(i))
 
     img = np.mean(img3, axis=2).astype(np.uint8)
 
-    cv.imwrite("scan/img_{:04d}.png".format(i), img)
+    cv.imwrite("{}img_{:04d}.png".format(dirscan,i), img)
