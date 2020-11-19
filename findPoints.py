@@ -46,18 +46,33 @@ def get_entourage(sgmf, circle):
 
 
 
-def get_objp(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter):
-
-    patternSize=(points_per_row, points_per_colum)
-    offset=paperMargin+(circleSpacing+circleDiameter)/2
-
-    objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
-    objpL = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "yz")
-    objp=np.concatenate((objpR, objpL))
-    return patternSize, objp
+def get_objp(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, option):
 
 
-def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath ):
+    if option=='tsai':
+        patternSize=(points_per_row, points_per_colum)
+        offset=paperMargin+(circleSpacing+circleDiameter)/2
+
+        objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
+        objpL = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "yz")
+        objp=np.concatenate((objpR, objpL))
+        return patternSize, objp
+
+    elif option=='zhang':
+        patternSize=(points_per_row, points_per_colum)
+        offset=(circleSpacing+circleDiameter)/2
+
+        objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
+        objp=np.concatenate((objpR, objpR))
+        return patternSize, objp
+    else:
+        print("Options pour la calibration : 'tsai' ou 'zhang' ")
+        return 0,0
+
+
+
+
+def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, option ):
 
     # Clean paths:
     output_paths=[verifPath, pointsPath]
@@ -68,7 +83,7 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing,
     gray=cv.cvtColor(color , cv.COLOR_BGR2GRAY)
 
     # Points 3d
-    patternSize, objp = get_objp(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter)
+    patternSize, objp = get_objp(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, option)
 
     # Détection des centres dans l'image de la caméra
     _, imgp = detect_centers(patternSize, color, gray, verifPath)
@@ -81,7 +96,7 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing,
         line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} \n ".format(point2dCam[1]) ]
         fileCam.writelines(line)
     fileCam.close()
-    return objp, imgp
+    return objp.astype(np.float32), imgp.astype(np.float32)
 
 
 
@@ -99,4 +114,4 @@ def proj_centers(objp, imgp, projSize, sgmfPath, pointsPath):
         line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
         fileProj.writelines(line)
     fileProj.close()
-    return 0
+    return projp

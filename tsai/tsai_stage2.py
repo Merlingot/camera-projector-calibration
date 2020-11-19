@@ -4,7 +4,7 @@ import scipy.optimize as sci
 import numpy as np
 
 
-def formatage0(world, realImage,  R, T, f0, sx):
+def formatage0(world, realImage,  R, T, f0):
     Tx, Ty, Tz0 = T
     r1, r2, r3 = R[0,:]
     r4, r5, r6 = R[1,:]
@@ -23,9 +23,9 @@ def costfunction(theta, *args):
     Fy = f*(r4*xw+r5*yw+r6*zw+Ty)/(r7*xw+r8*yw+r9*zw+Tz) - Yd*(1 + (k1*rsquared +k2*rsquared**2) )
     return np.sum( Fx**2 ) + np.sum( Fy**2 )
 
-def nonLinearSearch(world, realImage, R, T, f, sx):
-    theta0, arg = formatage0(world, realImage, R, T, f, sx)
-    sol = sci.minimize(costfunction, theta0, args=arg, tol=1e-6)
+def nonLinearSearch(world, realImage, R, T, f):
+    theta0, arg = formatage0(world, realImage, R, T, f)
+    sol = sci.minimize(costfunction, theta0, args=arg)
     print(sol.message)
     print(sol.nit)
     f_, Tz_, k1_, k2_ = sol.x[0], sol.x[1], sol.x[2], sol.x[3]

@@ -34,6 +34,7 @@ def draw_reprojection(color, verifPath, objectPoints, imagePoints, cameraMatrix,
     pts, jac = cv.projectPoints(objPoints, rvecs, tvecs, cameraMatrix, distCoeffs)
     img = cv.drawChessboardCorners(color.copy(), patternSize, pts, 1)
     cv.imwrite('{}reprojection_cercles.png'.format(verifPath), img)
+    return img
 
 
 def intrinsic_matrix(f, Cx, Cy, dx, dy):

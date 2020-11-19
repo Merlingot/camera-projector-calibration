@@ -1,0 +1,59 @@
+- Camera double méthode -
+
+Erreur de reprojection RMS:
+[[4.03627012]
+ [4.12428162]]
+Erreur de reprojection RMS apres recalibration:
+[[4.17414798]]
+Matrice de rotation:
+[array([[ 2.83623247],
+       [-0.16127847],
+       [-1.2623753 ]])]
+Vecteur translation:
+[array([[ 0.91336863],
+       [ 0.96193376],
+       [18.53869633]])]
+Matrice paramètres intrinsèque:
+[[5.06314883e+03 0.00000000e+00 1.00800311e+03]
+ [0.00000000e+00 5.01233585e+03 8.72744507e+02]
+ [0.00000000e+00 0.00000000e+00 1.00000000e+00]]
+Coefficients de distorsion:
+[[-4.57629354e-01  1.36448476e+01 -8.35037629e-03 -2.30104931e-02
+  -9.74596803e+01]]
+
+- Projecteur double méthode -
+
+Erreur de reprojection RMS:
+[[2.52974029]
+ [2.71733836]]
+Erreur de reprojection RMS apres recalibration:
+[[2.6254394]]
+Matrice de rotation:
+[array([[ 2.75826955],
+       [-0.05904519],
+       [-1.41101553]])]
+Vecteur translation:
+[array([[ 0.97750863],
+       [ 0.64834011],
+       [18.57841362]])]
+Matrice paramètres intrinsèque:
+[[3.17099358e+03 0.00000000e+00 6.81946277e+02]
+ [0.00000000e+00 3.13959570e+03 9.10943605e+02]
+ [0.00000000e+00 0.00000000e+00 1.00000000e+00]]
+Coefficients de distorsion:
+[[-4.78567835e-01  9.53619422e+00  1.83502518e-03 -1.28658101e-02
+  -6.19432582e+01]]
+
+- Calibration Stéréo - 
+ 
+Erreur de reprojection RMS:
+3.3997936879916373
+Matrice de rotation:
+[[ 0.99220586 -0.05863216  0.10995364]
+ [ 0.06104318  0.99796016 -0.01868822]
+ [-0.10863362  0.02525448  0.99376101]]
+Vecteur translation:
+[-1.9107379 -0.0209312  0.2303094]
+Distance euclidienne caméra-projecteur:
+1.9246817536497167
+
