@@ -10,7 +10,7 @@ from util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
 # Data:
-SERIE="13_11_2020/louis"
+SERIE="13_11_2020/serie_gp_1"
 # Camera:
 imageSize = (2464, 2056)
 # Projecteur:
@@ -135,21 +135,16 @@ s.open('{}cam.xml'.format(outputPath), cv.FileStorage_WRITE)
 s.write('K',cameraMatrix)
 s.write('R', R)
 s.write('t', T)
-s.write('norme_t', np.linalg.norm(T))
 s.write('coeffs', camDistCoeffs)
 s.write('imageSize', imageSize)
 s.release()
-
-
-retval, projMatrix, projDistCoeffs, cameraMatrix, camDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended([objp], [projp], [imgp], projMatrix, projDistCoeffs, cameraMatrix, camDistCoeffs, projSize, np.zeros((3,3)), np.zeros(3))
 
 # Enregistrer:
 s = cv.FileStorage()
 s.open('{}proj.xml'.format(outputPath), cv.FileStorage_WRITE)
 s.write('K', projMatrix)
-s.write('R', R)
-s.write('t', T)
-s.write('norme_t', np.linalg.norm(T))
+s.write('R', np.zeros(R.shape))
+s.write('t', np.zeros(T.shape))
 s.write('coeffs', projDistCoeffs)
 s.write('imageSize', projSize)
 s.release()

@@ -44,8 +44,8 @@ Coefficients de distorsion:
 [[-9.15201629e-02  2.51966338e-01 -3.15435967e-02  3.54461721e-03
    2.32633427e+01]]
 
-- Calibration Stéréo - 
- 
+- Calibration Stéréo -
+
 Erreur de reprojection RMS:
 3.555285356767352
 Matrice de rotation:
@@ -56,4 +56,3 @@ Vecteur translation:
 [-1.80284873  0.20220785  1.59373111]
 Distance euclidienne caméra-projecteur:
 2.4147733666217315
-
