@@ -12,13 +12,13 @@ from util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
 # Data:
-SERIE="13_11_2020/serie_gp_1"
+SERIE="13_11_2020/louis"
 # Camera:
 imageSize = (2464, 2056)
 camPixelSize = (3.45e-6, 3.45e-6)
 # Projecteur:
 projSize=(1920,1200)
-projPixelSize = (1e-6, 1e-6)
+projPixelSize = (0.269e-3, 0.269e-3)
 # Damier
 points_per_row=8; points_per_colum=8
 circleDiameter=10e-2
@@ -64,7 +64,7 @@ cv.imwrite( '{}undistort.png'.format(outputPath), undistort )
 
 f=open(outputfile, 'w+')
 f.write('- Camera -\n\n')
-f.write('Erreur de reprojection moyenne - Après optimisation:\n')
+f.write('Erreur de reprojection RMS - Après optimisation:\n')
 f.write("{}\n".format(err))
 f.write('Matrice de rotation:\n')
 f.write("{}\n".format(R))
@@ -91,7 +91,7 @@ err = reprojection_err(projectorPoints, projectedPoints)
 
 f=open(outputfile, 'a')
 f.write('- Projecteur -\n\n')
-f.write('Erreur de reprojection moyenne - Après optimisation:\n')
+f.write('Erreur de reprojection RMS - Après optimisation:\n')
 f.write("{}\n".format(err))
 f.write('Matrice de rotation:\n')
 f.write("{}\n".format(R))
@@ -108,7 +108,7 @@ retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, per
 
 f=open(outputfile, 'a')
 f.write('- Calibration Stéréo - \n \n')
-f.write('Erreur de reprojection moyenne:\n')
+f.write('Erreur de reprojection RMS:\n')
 f.write("{}\n".format(np.sum(perViewErrors)/perViewErrors.shape[0]))
 f.write('Matrice de rotation:\n')
 f.write("{}\n".format(R))
