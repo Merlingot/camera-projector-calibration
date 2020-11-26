@@ -5,6 +5,29 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 
 
+
+
+def detect_corners(patternSize, color, gray, verifPath, pointsPath=None):
+
+    # termination criteria
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+    # Find circles
+    ret, corners = cv.findChessboardCorner(gray, patternSize, None)
+    imgPoints=[]
+    if ret == True:
+        imgp = cv.cornerSubPix(gray, corners, patternSize, (-1,-1), criteria)
+
+        imgPoints.append(imgp)
+
+        # Draw and display the corners.
+        img = cv.drawChessboardCorners(color.copy(), patternSize, imgp, ret)
+        cv.imwrite("{}corners.png".format(verifPath),img)
+
+        return imgPoints, imgp
+    else:
+        print("Fail")
+
 def detect_centers(patternSize, color, gray, verifPath, pointsPath=None):
     # Nombre de cercles
     points_per_row=patternSize[0]; points_per_colum=patternSize[1]

@@ -10,18 +10,27 @@ from util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
 # Data:
-SERIE="13_11_2020/serie_gp_1"
+SERIE="26_11_2020/serie_gp_1"
 # Camera:
 imageSize = (2464, 2056)
 # Projecteur:
 projSize=(1920,1200)
+
 # Damier
+damier='square'
 points_per_row=8; points_per_colum=8
-circleDiameter=10e-2
-circleSpacing=20e-2
+spacing=20e-2
 paperMargin=20e-2 # À trouver
 patternSize=(points_per_colum,points_per_row)
 patternSizeFull=(points_per_colum,points_per_row*2)
+
+# damier='cercle'
+# points_per_row=8; points_per_colum=8
+# circleDiameter=10e-2
+# circleSpacing=20e-2
+# paperMargin=20e-2 # À trouver
+# patternSize=(points_per_colum,points_per_row)
+# patternSizeFull=(points_per_colum,points_per_row*2)
 # ========================================================================
 
 # Input:
@@ -46,14 +55,14 @@ f=open(outputfile, 'w+'); f.close()
 
 # CAMERA ----------------------------------------------
 # Premiere estimation avec 2 vues coplanaires:
-objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, 'zhang')
+objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, 'zhang', damier)
 n=objp0.shape[0]
 objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]
 imagePoints=[imgp0[:int(n/2),:],imgp0[int(n/2):,:]]
 retval, cameraMatrix0, _, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
 
 # Deuxième estimation avec 1 vue non coplanaire
-objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, 'tsai')
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, 'tsai', damier)
 retval, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended([objp], [imgp], imageSize, cameraMatrix0, np.zeros((1,4)),flags=cv.CALIB_USE_INTRINSIC_GUESS)
 
 # Image pour le fun:

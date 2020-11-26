@@ -9,7 +9,7 @@ import glob
 
 import sgmf
 from detectCenters import detect_centers
-from circlesgrid import getAsymCirclesObjPoints
+from circlesgrid import getAsymCirclesObjPoints, getCorners
 from util import outputClean
 
 
@@ -18,18 +18,15 @@ def get_projPoints(sgmf,imgp):
     for i in range(projp.shape[0]):
         circle=imgp[i][0] #Format bizare
         # transformation affine
-        srcPoints, dstPoints = get_entourage(sgmf,circle)
+        srcPoints, dstPoints = get_47(sgmf,circle)
         mat,_ = cv.estimateAffine2D(srcPoints, dstPoints)
         A = np.array([[mat[0,0],mat[0,1]],[mat[1,0],mat[1,1]]]); b=mat[:,2]
         p=A@circle + b
         projp[i,0,:] = np.array([p.astype(np.float32)])
-        # sans transformation affine:
-        #         p=sgmf.get_value(circle)
-        #         projPoints[i,0,:]=np.array([ np.array([p[0],p[1]]).astype(np.float32)
     return projp
 
 
-def get_entourage(sgmf, circle):
+def get_47(sgmf, circle):
     N=47
     n=int((N-1)/2)
     srcPoints=np.zeros((N**2, 2))
@@ -46,33 +43,58 @@ def get_entourage(sgmf, circle):
 
 
 
-def get_objp(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, option):
+def get_objp(points_per_row, points_per_colum, paperMargin, spacing, circleDiameter, option, damier):
+
+    patternSize=(points_per_row, points_per_colum)
+
+    if damier=='cercle':
+        if option=='tsai':
+
+            offset=paperMargin+(spacing+circleDiameter)/2
+
+            objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+spacing, offset, 0, "xy")
+            objpL = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+spacing, offset, 0, "yz")
+            objp=np.concatenate((objpR, objpL))
+            return patternSize, objp
+
+        elif option=='zhang':
+
+            offset=(spacing+circleDiameter)/2
+
+            objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+spacing, offset, 0, "xy")
+            objp=np.concatenate((objpR, objpR))
+            return patternSize, objp
+        else:
+            print("Options pour la calibration : 'tsai' ou 'zhang' ")
+            return 0,0
 
 
-    if option=='tsai':
-        patternSize=(points_per_row, points_per_colum)
-        offset=paperMargin+(circleSpacing+circleDiameter)/2
+    elif damier=='square':
+        offset = paperMargin
 
-        objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
-        objpL = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "yz")
-        objp=np.concatenate((objpR, objpL))
-        return patternSize, objp
+        if option == 'tsai':
 
-    elif option=='zhang':
-        patternSize=(points_per_row, points_per_colum)
-        offset=(circleSpacing+circleDiameter)/2
+            objpR = getCorners(points_per_colum, points_per_row, spacing, offset, 0, "xy")
+            objpL = getCorners(points_per_colum, points_per_row, spacing, offset, 0, "yz")
+            objp=np.concatenate((objpR, objpL))
+            return patternSize, objp
+        elif option=='zhang':
+            objpR = getCorners(points_per_colum, points_per_row, spacing, offset, 0, "xy")
+            objp=np.concatenate((objpR, objpR))
+            return patternSize, objp
+        else:
+            print("Options pour la calibration : 'tsai' ou 'zhang' ")
+            return 0,0
 
-        objpR = getAsymCirclesObjPoints(points_per_colum, points_per_row, circleDiameter+circleSpacing, offset, 0, "xy")
-        objp=np.concatenate((objpR, objpR))
-        return patternSize, objp
     else:
-        print("Options pour la calibration : 'tsai' ou 'zhang' ")
+        print("Options pour le damier : 'cercle' ou 'square' ")
         return 0,0
 
 
 
 
-def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, option ):
+
+def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circleDiameter, noFringePath, verifPath, pointsPath, option, damier ):
 
     # Clean paths:
     output_paths=[verifPath, pointsPath]
@@ -83,10 +105,16 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing,
     gray=cv.cvtColor(color , cv.COLOR_BGR2GRAY)
 
     # Points 3d
-    patternSize, objp = get_objp(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, option)
+    patternSize, objp = get_objp(points_per_row, points_per_colum, paperMargin, spacing, circleDiameter, option, damier)
 
-    # Détection des centres dans l'image de la caméra
-    _, imgp = detect_centers(patternSize, color, gray, verifPath)
+    if damier=='cercle':
+    # # Détection des centres dans l'image de la caméra (damier cercles)
+        _, imgp = detect_centers(patternSize, color, gray, verifPath)
+    elif damier=='square':
+        # Détection des coins dans l'image de la caméra (damier carrés)
+        _, imgp = detect_corners(patternSize, color, gray, verifPath)
+    else:
+        print("damier: 'square' ou 'cercle' ")
 
     # 4. Écriture dans un fichier :
     fileCam = open("{}points_camera.txt".format(pointsPath),"w")
