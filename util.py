@@ -24,7 +24,7 @@ def draw_reprojection(color, verifPath, objectPoints, imagePoints, cameraMatrix,
     imgPoints=imagePoints.astype(np.float32)
     # Vérification de la calibration de la caméra en reprojection:
     # Montrer axes
-    axis = np.float32([[1,0,0], [0,1,0], [0,0,1]]).reshape(-1,3)*1
+    axis = np.float32([[1,0,0], [0,1,0], [0,0,1]]).reshape(-1,3)*0.5
     ret, rvecs, tvecs = cv.solvePnP(objPoints, imgPoints, cameraMatrix, distCoeffs)
     axisProj, jac = cv.projectPoints(axis, rvecs, tvecs, cameraMatrix, distCoeffs)
     origin = np.float32([[0,0,0]]).reshape(-1,1)
@@ -33,7 +33,7 @@ def draw_reprojection(color, verifPath, objectPoints, imagePoints, cameraMatrix,
     cv.imwrite('{}reprojection_axes.png'.format(verifPath), img)
     pts, jac = cv.projectPoints(objPoints, rvecs, tvecs, cameraMatrix, distCoeffs)
     img = cv.drawChessboardCorners(color.copy(), patternSize, pts, 1)
-    cv.imwrite('{}reprojection_cercles.png'.format(verifPath), img)
+    cv.imwrite('{}reprojection_points.png'.format(verifPath), img)
     return img
 
 

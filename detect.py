@@ -1,5 +1,5 @@
 """ Fonction pour détecter le centre des cercles sur un tsai grid """
-
+import os
 import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -13,20 +13,48 @@ def detect_corners(patternSize, color, gray, verifPath, pointsPath=None):
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
     # Find circles
-    ret, corners = cv.findChessboardCorner(gray, patternSize, None)
-    imgPoints=[]
-    if ret == True:
-        imgp = cv.cornerSubPix(gray, corners, patternSize, (-1,-1), criteria)
+    ret, corners = cv.findChessboardCorners(gray, patternSize, None)
 
-        imgPoints.append(imgp)
+    imageSize=color.shape
+    mean=np.mean(corners[:,0,0])
+    d = np.linalg.norm(corners[0,0,:]-corners[1,0,:])
+    if mean < imageSize[0]:
+        x = corners[0,0,0]
+        sep=x+d
+    else:
+        x=corners[patternSize[0]-1,0,0]
+        sep=x-d
+
+    xIndex = np.indices(gray.shape)[1]
+
+    maskR=xIndex>sep*0.975
+    maskL=xIndex<sep*1.025
+    grayR=gray*maskR
+    grayL=gray*maskL
+
+    # Find corners
+    retR, centersR = cv.findChessboardCorners(grayR, patternSize, None)
+    retL, centersL = cv.findChessboardCorners(grayL, patternSize, None)
+    imgPoints=[]
+    ret=retR*retL
+    if ret == True:
+        imgpR = cv.cornerSubPix(gray, centersR, patternSize, (-1,-1), criteria)
+        imgpL = cv.cornerSubPix(gray, centersL, patternSize, (-1,-1), criteria)
+
+        imgPoints.append(imgpR)
+        imgPoints.append(imgpL)
+        imgp=np.concatenate((imgpR, imgpL)) #Meme format que objp
 
         # Draw and display the corners.
-        img = cv.drawChessboardCorners(color.copy(), patternSize, imgp, ret)
-        cv.imwrite("{}corners.png".format(verifPath),img)
+        imgR = cv.drawChessboardCorners(color.copy(), patternSize, imgpR, ret)
+        cv.imwrite("{}centersR.png".format(verifPath),imgR)
+        imgL = cv.drawChessboardCorners(color.copy(), patternSize, imgpL, ret)
+        cv.imwrite("{}centersL.png".format(verifPath),imgL)
 
         return imgPoints, imgp
     else:
         print("Fail")
+
 
 def detect_centers(patternSize, color, gray, verifPath, pointsPath=None):
     # Nombre de cercles

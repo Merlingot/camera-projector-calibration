@@ -70,7 +70,7 @@ def get_objp(points_per_row, points_per_colum, paperMargin, spacing, circleDiame
 
 
     elif damier=='square':
-        offset = paperMargin
+        offset = paperMargin+spacing
 
         if option == 'tsai':
 

@@ -10,7 +10,7 @@ from util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
 # Data:
-SERIE="26_11_2020/serie_gp_1"
+SERIE="26_11_2020/5500mm"
 # Camera:
 imageSize = (2464, 2056)
 # Projecteur:
@@ -18,16 +18,16 @@ projSize=(1920,1200)
 
 # Damier
 damier='square'
-points_per_row=8; points_per_colum=8
-spacing=20e-2
-paperMargin=20e-2 # À trouver
-patternSize=(points_per_colum,points_per_row)
-patternSizeFull=(points_per_colum,points_per_row*2)
+points_per_row=10; points_per_colum=7
+spacing=10e-2
+paperMargin=8.25e-2 # À trouver
+patternSize=(points_per_row, points_per_colum)
+patternSizeFull=(points_per_row*2, points_per_colum)
 
 # damier='cercle'
 # points_per_row=8; points_per_colum=8
 # circleDiameter=10e-2
-# circleSpacing=20e-2
+# spacing=20e-2
 # paperMargin=20e-2 # À trouver
 # patternSize=(points_per_colum,points_per_row)
 # patternSizeFull=(points_per_colum,points_per_row*2)
@@ -35,8 +35,8 @@ patternSizeFull=(points_per_colum,points_per_row*2)
 
 # Input:
 dataPath="data/{}/".format(SERIE)
-noFringePath=os.path.join(dataPath,"nofringe/noFringe.png")
-sgmfPath=os.path.join(dataPath, "cam_match.png")
+noFringePath=os.path.join(dataPath,"max_00.png")
+sgmfPath=os.path.join(dataPath, "match_00.png")
 # Output:
 outputPath=os.path.join(dataPath,"output/")
 # Points 3d et 2d:
@@ -55,18 +55,19 @@ f=open(outputfile, 'w+'); f.close()
 
 # CAMERA ----------------------------------------------
 # Premiere estimation avec 2 vues coplanaires:
-objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, 'zhang', damier)
+objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, pointsPath, 'zhang', damier)
 n=objp0.shape[0]
 objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]
 imagePoints=[imgp0[:int(n/2),:],imgp0[int(n/2):,:]]
-retval, cameraMatrix0, _, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
+retval, cameraMatrix0, camDistCoeffs0, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
 
 # Deuxième estimation avec 1 vue non coplanaire
-objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, circleSpacing, circleDiameter, noFringePath, verifPath, pointsPath, 'tsai', damier)
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, pointsPath, 'tsai', damier)
 retval, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended([objp], [imgp], imageSize, cameraMatrix0, np.zeros((1,4)),flags=cv.CALIB_USE_INTRINSIC_GUESS)
 
 # Image pour le fun:
-draw_reprojection(cv.imread(noFringePath), calibPath, objp, imgp, cameraMatrix, camDistCoeffs, patternSizeFull)
+_=draw_reprojection(cv.imread(noFringePath), calibPath, objp, imgp, cameraMatrix, camDistCoeffs, patternSizeFull)
+
 
 f=open(outputfile, 'a')
 f.write('- Camera double méthode -\n\n')
@@ -98,12 +99,13 @@ retval, projMatrix0, _, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(ob
 projp = proj_centers(objp, imgp, projSize, sgmfPath, pointsPath)
 retval, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended([objp], [projp], projSize, projMatrix0, np.zeros((1,4)), flags=cv.CALIB_USE_INTRINSIC_GUESS)
 
+
 # Image pour le fun:
-# projectedPoints, _ = cv.projectPoints(objp, rvecs[0], tvecs[0], projMatrix, projDistCoeffs)
-# plt.figure()
-# plt.plot(projp[:,0,0], projp[:,0,1], 'ro')
-# plt.plot(projectedPoints[:,0,0], projectedPoints[:,0,1], 'bo')
-# plt.show()
+projectedPoints, _ = cv.projectPoints(objp, rvecs[0], tvecs[0], projMatrix, projDistCoeffs)
+plt.figure()
+plt.plot(projp[:,0,0], projp[:,0,1], 'ro')
+plt.plot(projectedPoints[:,0,0], projectedPoints[:,0,1], 'bo')
+plt.show()
 
 f=open(outputfile, 'a')
 f.write('- Projecteur double méthode -\n\n')
