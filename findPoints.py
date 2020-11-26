@@ -8,8 +8,8 @@ import cv2 as cv
 import glob
 
 import sgmf
-from detectCenters import detect_centers
-from circlesgrid import getAsymCirclesObjPoints, getCorners
+from detect import detect_centers, detect_corners
+from grid import getAsymCirclesObjPoints, getCorners
 from util import outputClean
 
 
