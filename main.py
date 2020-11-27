@@ -10,7 +10,7 @@ from util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
 # Data:
-SERIE="26_11_2020/5500mm"
+SERIE="26_11_2020/4200mm"
 # Camera:
 imageSize = (2464, 2056)
 # Projecteur:
@@ -102,10 +102,10 @@ retval, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDe
 
 # Image pour le fun:
 projectedPoints, _ = cv.projectPoints(objp, rvecs[0], tvecs[0], projMatrix, projDistCoeffs)
-plt.figure()
-plt.plot(projp[:,0,0], projp[:,0,1], 'ro')
-plt.plot(projectedPoints[:,0,0], projectedPoints[:,0,1], 'bo')
-plt.show()
+# plt.figure()
+# plt.plot(projp[:,0,0], projp[:,0,1], 'ro')
+# plt.plot(projectedPoints[:,0,0], projectedPoints[:,0,1], 'bo')
+# plt.show()
 
 f=open(outputfile, 'a')
 f.write('- Projecteur double méthode -\n\n')
@@ -126,7 +126,7 @@ f.close()
 
 
 # # stereoCalibrate:
-retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended([objp], [imgp], [projp], cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
+retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended([objp],  [imgp], [projp], cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
 
 f=open(outputfile, 'a')
 f.write('- Calibration Stéréo - \n \n')
@@ -144,8 +144,8 @@ f.close()
 s = cv.FileStorage()
 s.open('{}cam.xml'.format(outputPath), cv.FileStorage_WRITE)
 s.write('K',cameraMatrix)
-s.write('R', R)
-s.write('t', T)
+s.write('R', np.eye(3))
+s.write('t', np.zeros(T.shape))
 s.write('coeffs', camDistCoeffs)
 s.write('imageSize', imageSize)
 s.release()
@@ -154,8 +154,8 @@ s.release()
 s = cv.FileStorage()
 s.open('{}proj.xml'.format(outputPath), cv.FileStorage_WRITE)
 s.write('K', projMatrix)
-s.write('R', np.zeros(R.shape))
-s.write('t', np.zeros(T.shape))
+s.write('R', R)
+s.write('t', T)
 s.write('coeffs', projDistCoeffs)
 s.write('imageSize', projSize)
 s.release()

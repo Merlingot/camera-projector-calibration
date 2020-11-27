@@ -18,7 +18,7 @@ def detect_corners(patternSize, color, gray, verifPath, pointsPath=None):
     imageSize=color.shape
     mean=np.mean(corners[:,0,0])
     d = np.linalg.norm(corners[0,0,:]-corners[1,0,:])
-    if mean < imageSize[0]:
+    if mean < imageSize[0]/2:
         x = corners[0,0,0]
         sep=x+d
     else:
