@@ -98,7 +98,7 @@ def get_objp(points_per_row, points_per_colum, paperMargin, spacing, circleDiame
 
 
 
-def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circleDiameter, noFringePath, verifPath, pointsPath, option, motif, damier=None):
+def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circleDiameter, noFringePath, verifPath, option, motif, damier='double', pointsPath=None):
 
     # Clean paths:
     output_paths=[verifPath, pointsPath]
@@ -131,7 +131,7 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circl
     return objp.astype(np.float32), imgp.astype(np.float32)
 
 
-def proj_centers(objp, imgp, projSize, sgmfPath, pointsPath):
+def proj_centers(objp, imgp, projSize, sgmfPath, pointsPath=None):
 
     # Extraction des coordonnées des points dans le plan image du projecteur
     SGMF=sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)

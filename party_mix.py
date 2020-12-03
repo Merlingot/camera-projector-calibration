@@ -43,7 +43,7 @@ objectPoints=[]; imagePoints=[]; projPoints=[]
 for i in range(len(noFringePath)):
 
     _, objp0 =get_objp(points_per_row, points_per_colum, paperMargin, spacing, None, 'zhang', motif)
-    objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath[i], verifPath, verifPath, 'tsai', motif)
+    objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath[i], verifPath, 'tsai', motif)
     # Zhang
     n=objp0.shape[0]
     objectPoints0.append(objp0[:int(n/2),:])

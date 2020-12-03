@@ -51,7 +51,7 @@ f=open(outputfile, 'w+'); f.close()
 
 # CAMERA ----------------------------------------------
 _, objp0 =get_objp(points_per_row, points_per_colum, paperMargin, spacing, None, 'zhang', motif, damier)
-objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, verifPath, 'tsai', motif, damier)
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath,'tsai', motif, damier)
 # Premiere estimation avec 2 vues coplanaires:
 n=objp0.shape[0]
 objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]

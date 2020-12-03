@@ -19,7 +19,7 @@ camPixelSize=(3.45e-6, 3.45e-6)
 # Projecteur:
 projSize=(1920,1200)
 # Damier
-damier='square'
+motif='square'
 points_per_row=10; points_per_colum=7
 spacing=10e-2
 paperMargin=8.25e-2 # À trouver
@@ -43,14 +43,14 @@ f=open(outputfile, 'w+'); f.close()
 
 # CAMERA
 # Premiere estimation avec 2 vues coplanaires:-------------------------------
-objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, verifPath, 'zhang', damier)
+objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, 'zhang', motif)
 n=objp0.shape[0]
 objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]
 imagePoints=[imgp0[:int(n/2),:],imgp0[int(n/2):,:]]
 retval, cameraMatrix0, camDistCoeffs0, R0, T0, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
 
 # Deuxieme méthode avec Tsai:----------------------------------------------
-objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, verifPath, 'tsai', damier)
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, verifPath, 'tsai', motif)
 # Paramètre linéaires
 data, params, R, T, f, sx = calibrate(camPointsPath, imageSize, camPixelSize)
 # Paramètres non linéaires

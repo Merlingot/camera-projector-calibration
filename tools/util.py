@@ -8,7 +8,7 @@ def outputClean(output_paths):
             os.makedirs(path)
         else:
             for file in os.scandir(path):
-                if file.name.endswith(".png"):
+                if file.name.endswith(".png") or file.name.endswith(".txt"):
                     os.unlink(file.path)
 
 
