@@ -120,14 +120,14 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circl
     else:
         print("motif: 'square' ou 'cercle' ")
 
-    # # 4. Écriture dans un fichier :
-    # fileCam = open("{}points_camera.txt".format(pointsPath),"w")
-    # for i in range(imgp.shape[0]):
-    #     point2dCam=imgp[i][0] #array(array(u,v))
-    #     point3d=objp[i]
-    #     line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} \n ".format(point2dCam[1]) ]
-    #     fileCam.writelines(line)
-    # fileCam.close()
+    # 4. Écriture dans un fichier :
+    fileCam = open("{}points_camera.txt".format(pointsPath),"w")
+    for i in range(imgp.shape[0]):
+        point2dCam=imgp[i][0] #array(array(u,v))
+        point3d=objp[i]
+        line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dCam[0]), "{} \n ".format(point2dCam[1]) ]
+        fileCam.writelines(line)
+    fileCam.close()
     return objp.astype(np.float32), imgp.astype(np.float32)
 
 

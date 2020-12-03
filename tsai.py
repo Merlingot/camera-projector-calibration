@@ -19,6 +19,7 @@ camPixelSize=(3.45e-6, 3.45e-6)
 # Projecteur:
 projSize=(1920,1200)
 # Damier
+damier='double'
 motif='square'
 points_per_row=10; points_per_colum=7
 spacing=10e-2
@@ -31,26 +32,16 @@ dataPath="data/{}/".format(SERIE)
 noFringePath=os.path.join(dataPath,"max_00.png")
 sgmfPath=os.path.join(dataPath, "match_00.png")
 # Output
-outputPath=os.path.join(dataPath,"output_tsai/")
-# -> Autres:
-verifPath=outputPath
-camPointsPath=os.path.join(verifPath,"points_camera.txt")
+outputPath=os.path.join(dataPath,"output/")
+camPointsPath=os.path.join(outputPath,"points_camera.txt")
 # -> Résultat de calibration
-outputfile=os.path.join(verifPath,'calibration_tsai.txt')
+outputfile=os.path.join(outputPath,'calibration_tsai.txt')
 # Créer/Vider les folder
-outputClean([verifPath])
+outputClean([outputPath])
 f=open(outputfile, 'w+'); f.close()
 
 # CAMERA
-# Premiere estimation avec 2 vues coplanaires:-------------------------------
-objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, 'zhang', motif)
-n=objp0.shape[0]
-objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]
-imagePoints=[imgp0[:int(n/2),:],imgp0[int(n/2):,:]]
-retval, cameraMatrix0, camDistCoeffs0, R0, T0, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
-
-# Deuxieme méthode avec Tsai:----------------------------------------------
-objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, verifPath, verifPath, 'tsai', motif)
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, outputPath, 'tsai', motif, outputPath)
 # Paramètre linéaires
 data, params, R, T, f, sx = calibrate(camPointsPath, imageSize, camPixelSize)
 # Paramètres non linéaires
@@ -60,21 +51,9 @@ imagePoints, objectPoints, rvec, tvec, cameraMatrix, camDistCoeffs=formatage(dat
 pts, _ = cv.projectPoints(objectPoints, rvec, tvec, cameraMatrix, camDistCoeffs)
 err = reprojection_err(imgp, pts)
 # Image pour le fun:
-_=draw_reprojection(cv.imread(noFringePath), verifPath, objp, imgp, cameraMatrix, camDistCoeffs, patternSizeFull)
+_=draw_reprojection(cv.imread(noFringePath), outputPath, objp, imgp, cameraMatrix, camDistCoeffs, patternSizeFull)
 
 f=open(outputfile, 'a')
-f.write('- Camera Zhang -\n\n')
-f.write('Erreur de reprojection RMS:\n')
-f.write("{}\n".format(retval))
-f.write('Matrice de rotation:\n')
-f.write("{}\n".format(R0))
-f.write('Vecteur translation:\n')
-f.write("{}\n".format(T0))
-f.write('Matrice paramètres intrinsèque:\n')
-f.write("{}\n".format(cameraMatrix0))
-f.write('Coefficients de distorsion:\n')
-f.write('{}\n\n'.format(camDistCoeffs0))
-
 f.write('- Camera Tsai -\n\n')
 f.write('Erreur de reprojection RMS:\n')
 f.write("{}\n".format(err))
@@ -91,16 +70,16 @@ f.close()
 
 # Projecteur ----------------------------------------------
 # Premiere estimation avec 2 vues coplanaire
-projp0 = proj_centers(objp0, imgp0, projSize, sgmfPath, verifPath)
+_, objp0 =get_objp(points_per_row, points_per_colum, paperMargin, spacing, None, 'zhang', motif, damier)
+projp0 = proj_centers(objp0, imgp, projSize, sgmfPath, outputPath)
 n=objp.shape[0]
 objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]
 projPoints=[projp0[:int(n/2),:],projp0[int(n/2):,:]]
 retval, projMatrix0, _, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, projPoints, projSize, np.zeros((3,3)), np.zeros((1,4)))
 
 # Deuxième estimation avec 1 vue non coplanaire
-projp = proj_centers(objp, imgp, projSize, sgmfPath, verifPath)
+projp = proj_centers(objp, imgp, projSize, sgmfPath, outputPath)
 retval, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended([objp], [projp], projSize, projMatrix0, np.zeros((1,4)), flags=cv.CALIB_USE_INTRINSIC_GUESS)
-
 
 f=open(outputfile, 'a')
 f.write('- Projecteur double méthode -\n\n')
@@ -118,7 +97,6 @@ f.write('Coefficients de distorsion:\n')
 f.write('{}\n\n'.format(projDistCoeffs))
 f.close()
 # --------------------------------------------------------
-
 
 # # stereoCalibrate:
 retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended([objp],  [imgp], [projp], cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
