@@ -116,3 +116,45 @@ s.write('t', T)
 s.write('coeffs', projDistCoeffs)
 s.write('imageSize', projSize)
 s.release()
+
+indexes=[7,10,11,12]
+objectPoints_=[]; imagePoints_=[]; projPoints_=[];
+for i in indexes:
+    objectPoints_.append(objectPoints[i])
+    imagePoints_.append(imagePoints[i])
+    projPoints_.append(projPoints[i])
+
+
+retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F = cv.stereoCalibrate(objectPoints_, imagePoints_, projPoints_, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, flags=cv.CALIB_FIX_INTRINSIC)
+
+f=open(outputfile, 'a')
+f.write('- Calibration Stéréo Zhang - \n \n')
+f.write('Erreur de reprojection RMS:\n')
+f.write("{}\n".format(retval))
+f.write('Matrice de rotation:\n')
+f.write("{}\n".format(R))
+f.write('Vecteur translation:\n')
+f.write("{}\n".format(T))
+f.write('Distance euclidienne caméra-projecteur (m):\n')
+f.write("{}\n\n".format(np.linalg.norm(T)))
+f.close()
+
+# Enregistrer:
+s = cv.FileStorage()
+s.open('{}cam_.xml'.format(outputPath), cv.FileStorage_WRITE)
+s.write('K',cameraMatrix)
+s.write('R', np.eye(3))
+s.write('t', np.zeros(T.shape))
+s.write('coeffs', camDistCoeffs)
+s.write('imageSize', imageSize)
+s.release()
+
+# Enregistrer:
+s = cv.FileStorage()
+s.open('{}proj_.xml'.format(outputPath), cv.FileStorage_WRITE)
+s.write('K', projMatrix)
+s.write('R', R)
+s.write('t', T)
+s.write('coeffs', projDistCoeffs)
+s.write('imageSize', projSize)
+s.release()
