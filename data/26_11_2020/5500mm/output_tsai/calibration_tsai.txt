@@ -1,0 +1,76 @@
+- Camera Zhang -
+
+Erreur de reprojection RMS:
+0.13784173606071187
+Matrice de rotation:
+[array([[-2.94213383],
+       [ 0.01784969],
+       [ 1.05854289]]), array([[-2.81244091],
+       [ 0.02660309],
+       [-1.38961809]])]
+Vecteur translation:
+[array([[0.05659196],
+       [0.03313595],
+       [5.98298377]]), array([[-0.70845722],
+       [ 0.05589441],
+       [ 4.9757749 ]])]
+Matrice paramètres intrinsèque:
+[[4.87645017e+03 0.00000000e+00 1.16565008e+03]
+ [0.00000000e+00 4.76349116e+03 1.01383897e+03]
+ [0.00000000e+00 0.00000000e+00 1.00000000e+00]]
+Coefficients de distorsion:
+[[-1.45744959e-01  7.84343741e-01 -5.95237648e-03 -8.36023241e-03
+   2.12164600e+01]]
+
+- Camera Tsai -
+
+Erreur de reprojection RMS:
+0.6547484282026179
+Matrice de rotation:
+[[ 0.79354444 -0.01586702 -0.6083054 ]
+ [-0.00382137 -0.99977022  0.02109293]
+ [-0.6085003  -0.01441361 -0.79342273]]
+Vecteur translation:
+[-0.0235344   0.01495475  5.81023428]
+Matrice paramètres intrinsèque:
+[[4.6153699e+03 0.0000000e+00 1.2320000e+03]
+ [0.0000000e+00 4.6153699e+03 1.0280000e+03]
+ [0.0000000e+00 0.0000000e+00 1.0000000e+00]]
+Coefficients de distorsion:
+[5.16867208e-13 0.00000000e+00 0.00000000e+00 0.00000000e+00]
+
+- Projecteur double méthode -
+
+Erreur de reprojection RMS:
+[[0.30101869]
+ [0.28900534]]
+Erreur de reprojection RMS apres recalibration:
+[[0.40094369]]
+Matrice de rotation:
+[array([[ 2.89012179],
+       [-0.0178992 ],
+       [-1.13115028]])]
+Vecteur translation:
+[array([[-0.08726176],
+       [ 0.31179587],
+       [ 5.49710897]])]
+Matrice paramètres intrinsèque:
+[[2.91018420e+03 0.00000000e+00 9.14013445e+02]
+ [0.00000000e+00 2.91259561e+03 4.98048245e+02]
+ [0.00000000e+00 0.00000000e+00 1.00000000e+00]]
+Coefficients de distorsion:
+[[ 3.36055733e-01 -1.79329715e+01 -3.33840166e-03 -1.39284366e-02
+   2.27753340e+02]]
+
+- Calibration Stéréo -
+
+Erreur de reprojection RMS:
+0.5049012654687961
+Matrice de rotation:
+[[ 0.99559589 -0.02035684  0.09151191]
+ [ 0.01551025  0.99845467  0.05336397]
+ [-0.09245682 -0.05170957  0.9943731 ]]
+Vecteur translation:
+[-0.59557571 -0.01304335 -0.28218687]
+Distance euclidienne caméra-projecteur:
+0.6591737167717054

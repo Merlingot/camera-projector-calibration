@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<K type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>3</cols>
+  <dt>d</dt>
+  <data>
+    2.9306750715071480e+03 0. 9.3729162661242367e+02 0.
+    2.9542548754942754e+03 5.3624689460449531e+02 0. 0. 1.</data></K>
+<R type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>3</cols>
+  <dt>d</dt>
+  <data>
+    9.9793701683746572e-01 -1.9368228763694418e-02
+    6.1209330498682171e-02 1.6787463125492934e-02 9.9895968792761836e-01
+    4.2399563410082261e-02 -6.1966858136829228e-02
+    -4.1284544445985741e-02 9.9722399433754982e-01</data></R>
+<t type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>1</cols>
+  <dt>d</dt>
+  <data>
+    -6.2060918686466471e-01 -7.5611214975310915e-03
+    -2.5786616849954591e-01</data></t>
+<coeffs type_id="opencv-matrix">
+  <rows>1</rows>
+  <cols>5</cols>
+  <dt>d</dt>
+  <data>
+    -7.9846687043597403e-02 3.5972671088156438e-01
+    -4.5550754673074579e-03 -9.2267748662554269e-03
+    -3.0964945201379495e+00</data></coeffs>
+<imageSize type_id="opencv-matrix">
+  <rows>2</rows>
+  <cols>1</cols>
+  <dt>d</dt>
+  <data>
+    1920. 1200.</data></imageSize>
+</opencv_storage>

@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import os
 import glob
 
-from findPoints import camera_centers, proj_centers
-from util import draw_reprojection, reprojection_err, formatage, outputClean
+from tools.findPoints import camera_centers, proj_centers, get_objp
+from tools.util import draw_reprojection, reprojection_err, formatage, outputClean
 
 # Paramètres =============================================================
 # Data:
@@ -17,7 +17,7 @@ imageSize = (2464, 2056)
 # Projecteur:
 projSize=(1920,1200)
 # Damier
-damier='square'
+motif='square'
 points_per_row=10; points_per_colum=7
 spacing=10e-2
 paperMargin=8.25e-2 # À trouver
@@ -32,41 +32,35 @@ sgmfPath=np.sort(glob.glob(os.path.join(dataPath,"match_*.png")))
 # Output:
 outputPath=os.path.join(dataPath,"output/")
 # Points 3d et 2d:
-pointsPath=outputPath
-camPointsPath=os.path.join(pointsPath,"points_camera.txt")
-projPointsPath=os.path.join(pointsPath,"points_camera.txt")
-# Images de vérification
 verifPath=outputPath
-# Résultat de calibration
-calibPath=outputPath
-outputfile=os.path.join(calibPath,'calibration_double.txt')
+outputfile=os.path.join(verifPath,'calibration.txt')
 # Créer/Vider les folder:
-outputClean([verifPath, pointsPath, calibPath])
+outputClean([verifPath])
 f=open(outputfile, 'w+'); f.close()
 
 objectPoints0=[]; imagePoints0=[]; projPoints0=[]
 objectPoints=[]; imagePoints=[]; projPoints=[]
 for i in range(len(noFringePath)):
 
+    _, objp0 =get_objp(points_per_row, points_per_colum, paperMargin, spacing, None, 'zhang', motif)
+    objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath[i], verifPath, verifPath, 'tsai', motif)
     # Zhang
-    objp0, imgp0 = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath[i], verifPath, pointsPath, 'zhang', damier)
     n=objp0.shape[0]
     objectPoints0.append(objp0[:int(n/2),:])
     objectPoints0.append(objp0[int(n/2):,:])
-    imagePoints0.append(imgp0[:int(n/2),:])
-    imagePoints0.append(imgp0[int(n/2):,:])
+    imagePoints0.append(imgp[:int(n/2),:])
+    imagePoints0.append(imgp[int(n/2):,:])
 
-    projp0 = proj_centers(objp0[:int(n/2),:], imgp0[:int(n/2),:], projSize, sgmfPath[i], pointsPath)
+    projp0 = proj_centers(objp0[:int(n/2),:], imgp[:int(n/2),:], projSize, sgmfPath[i], verifPath)
     projPoints0.append(projp0)
-    projp0 = proj_centers(objp0[int(n/2):,:], imgp0[int(n/2):,:], projSize, sgmfPath[i], pointsPath)
+    projp0 = proj_centers(objp0[int(n/2):,:], imgp[int(n/2):,:], projSize, sgmfPath[i], verifPath)
     projPoints0.append(projp0)
 
     # Tsai
-    objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath[i], verifPath, pointsPath, 'tsai', damier)
     objectPoints.append(objp)
     imagePoints.append(imgp)
 
-    projp = proj_centers(objp, imgp, projSize, sgmfPath[i], pointsPath)
+    projp = proj_centers(objp, imgp, projSize, sgmfPath[i], verifPath)
     projPoints.append(projp)
 
 # Camera ----------------------------------------------
@@ -81,14 +75,14 @@ retval, projMatrix0, projDistCoeffs0, _, _, _, _, perViewErrors0=cv.calibrateCam
 retval, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, projPoints, projSize, projMatrix0, projDistCoeffs0, flags=cv.CALIB_USE_INTRINSIC_GUESS)
 # --------------------------------------------------------
 
-
+help(cv.stereoCalibrate)
 # # stereoCalibrate:
-retval, cameraMatrix0, camDistCoeffs0, projMatrix0, projDistCoeffs0, R0, T0, E0, F0, perViewErrors0 = cv.stereoCalibrateExtended(objectPoints0, imagePoints0, projPoints0, cameraMatrix0, camDistCoeffs0, projMatrix0, projDistCoeffs0, imageSize, np.zeros((3,3)), np.zeros(3))
+retval0, cameraMatrix0, camDistCoeffs0, projMatrix0, projDistCoeffs0, R0, T0, E0, F0= cv.stereoCalibrate(objectPoints0, imagePoints0, projPoints0, cameraMatrix0, camDistCoeffs0, projMatrix0, projDistCoeffs0, imageSize, flags=cv.CALIB_USE_INTRINSIC_GUESS)
 
 f=open(outputfile, 'a')
 f.write('- Calibration Stéréo Zhang - \n \n')
 f.write('Erreur de reprojection RMS:\n')
-f.write("{}\n".format(np.mean(perViewErrors0)))
+f.write("{}\n".format(retval0))
 f.write('Matrice de rotation:\n')
 f.write("{}\n".format(R0))
 f.write('Vecteur translation:\n')
@@ -97,12 +91,32 @@ f.write('Distance euclidienne caméra-projecteur:\n')
 f.write("{}\n\n".format(np.linalg.norm(T0)))
 f.close()
 
-retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F, perViewErrors = cv.stereoCalibrateExtended(objectPoints, imagePoints, projPoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, np.zeros((3,3)), np.zeros(3))
+# Enregistrer:
+s = cv.FileStorage()
+s.open('{}cam_z.xml'.format(outputPath), cv.FileStorage_WRITE)
+s.write('K',cameraMatrix0)
+s.write('R', np.eye(3))
+s.write('t', np.zeros(T0.shape))
+s.write('coeffs', camDistCoeffs0)
+s.write('imageSize', imageSize)
+s.release()
+
+# Enregistrer:
+s = cv.FileStorage()
+s.open('{}proj_z.xml'.format(outputPath), cv.FileStorage_WRITE)
+s.write('K', projMatrix0)
+s.write('R', R0)
+s.write('t', T0)
+s.write('coeffs', projDistCoeffs0)
+s.write('imageSize', projSize)
+s.release()
+
+retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F = cv.stereoCalibrate(objectPoints, imagePoints, projPoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, flags=cv.CALIB_USE_INTRINSIC_GUESS)
 
 f=open(outputfile, 'a')
 f.write('- Calibration Stéréo Tsai - \n \n')
 f.write('Erreur de reprojection RMS:\n')
-f.write("{}\n".format(np.mean(perViewErrors)))
+f.write("{}\n".format(retval))
 f.write('Matrice de rotation:\n')
 f.write("{}\n".format(R))
 f.write('Vecteur translation:\n')

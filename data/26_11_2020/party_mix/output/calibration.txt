@@ -1,0 +1,30 @@
+- Calibration Stéréo Zhang - 
+ 
+Erreur de reprojection RMS:
+0.25832625997097114
+Matrice de rotation:
+[[ 0.99793702 -0.01936823  0.06120933]
+ [ 0.01678746  0.99895969  0.04239956]
+ [-0.06196686 -0.04128454  0.99722399]]
+Vecteur translation:
+[[-0.62060919]
+ [-0.00756112]
+ [-0.25786617]]
+Distance euclidienne caméra-projecteur:
+0.6720921768892694
+
+- Calibration Stéréo Tsai - 
+ 
+Erreur de reprojection RMS:
+0.5562149897152324
+Matrice de rotation:
+[[ 0.9991926  -0.01639221  0.03668036]
+ [ 0.01498893  0.9991573   0.03821035]
+ [-0.0372758  -0.0376297   0.99859628]]
+Vecteur translation:
+[[-0.60355423]
+ [-0.01040248]
+ [-0.29852402]]
+Distance euclidienne caméra-projecteur:
+0.6734259491410626
+
