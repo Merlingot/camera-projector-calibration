@@ -5,8 +5,6 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 
 
-
-
 def detect_corners(patternSize, color, gray, damier, verifPath, pointsPath=None):
 
     # termination criteria

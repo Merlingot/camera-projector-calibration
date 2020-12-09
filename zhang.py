@@ -117,6 +117,8 @@ s.write('coeffs', projDistCoeffs)
 s.write('imageSize', projSize)
 s.release()
 
+
+# Images de face
 indexes=[7,10,11,12]
 objectPoints_=[]; imagePoints_=[]; projPoints_=[];
 for i in indexes:

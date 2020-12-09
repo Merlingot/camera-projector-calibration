@@ -7,10 +7,10 @@ import numpy as np
 import cv2 as cv
 import glob
 
-import sgmf
-from detect import detect_centers, detect_corners
-from grid import getAsymCirclesObjPoints, getCorners
-from util import outputClean
+import tools.sgmf as sgmf
+from tools.detect import detect_centers, detect_corners
+from tools.grid import getAsymCirclesObjPoints, getCorners
+from tools.util import outputClean
 
 
 def get_projPoints(sgmf,imgp):
@@ -99,10 +99,6 @@ def get_objp(points_per_row, points_per_colum, paperMargin, spacing, circleDiame
 
 
 def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circleDiameter, noFringePath, verifPath, option, motif, damier='double', pointsPath=None):
-
-    # Clean paths:
-    output_paths=[verifPath, pointsPath]
-    outputClean(output_paths)
 
     # Lire l'image
     color=cv.imread(noFringePath)

@@ -5,11 +5,10 @@ import cv2 as cv
 import matplotlib.pyplot as plt
 import os
 
-from tools.findPoints import camera_centers, proj_centers
+from tools.findPoints import camera_centers, proj_centers, get_objp
 from tools.tsai_stage1 import calibrate
 from tools.tsai_stage2 import nonLinearSearch
-from tool.util import draw_reprojection, reprojection_err, formatage, outputClean
-
+from tools.util import draw_reprojection, reprojection_err, formatage, outputClean
 # Paramètres =============================================================
 # Data:
 SERIE="26_11_2020/5500mm"
@@ -41,7 +40,7 @@ outputClean([outputPath])
 f=open(outputfile, 'w+'); f.close()
 
 # CAMERA
-objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, outputPath, 'tsai', motif, outputPath)
+objp, imgp = camera_centers(points_per_row, points_per_colum, paperMargin, spacing, None, noFringePath, outputPath, 'tsai', motif, damier, outputPath)
 # Paramètre linéaires
 data, params, R, T, f, sx = calibrate(camPointsPath, imageSize, camPixelSize)
 # Paramètres non linéaires
@@ -75,11 +74,11 @@ projp0 = proj_centers(objp0, imgp, projSize, sgmfPath, outputPath)
 n=objp.shape[0]
 objectPoints=[objp0[:int(n/2),:],objp0[int(n/2):,:]]
 projPoints=[projp0[:int(n/2),:],projp0[int(n/2):,:]]
-retval, projMatrix0, _, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, projPoints, projSize, np.zeros((3,3)), np.zeros((1,4)))
+retval, projMatrix0, projDistCoeffs0, _, _, _, _, perViewErrors0=cv.calibrateCameraExtended(objectPoints, projPoints, projSize, np.zeros((3,3)), np.zeros((1,4)))
 
 # Deuxième estimation avec 1 vue non coplanaire
 projp = proj_centers(objp, imgp, projSize, sgmfPath, outputPath)
-retval, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended([objp], [projp], projSize, projMatrix0, np.zeros((1,4)), flags=cv.CALIB_USE_INTRINSIC_GUESS)
+retval, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended([objp], [projp], projSize, projMatrix0, projDistCoeffs0, flags=cv.CALIB_USE_INTRINSIC_GUESS)
 
 f=open(outputfile, 'a')
 f.write('- Projecteur double méthode -\n\n')
@@ -115,7 +114,7 @@ f.close()
 
 # Enregistrer:
 s = cv.FileStorage()
-s.open('{}cam.xml'.format(outputPath), cv.FileStorage_WRITE)
+s.open('{}cam_tsai.xml'.format(outputPath), cv.FileStorage_WRITE)
 s.write('K',cameraMatrix)
 s.write('R', np.eye(3))
 s.write('t', np.zeros(T.shape))
@@ -125,7 +124,7 @@ s.release()
 
 # Enregistrer:
 s = cv.FileStorage()
-s.open('{}proj.xml'.format(outputPath), cv.FileStorage_WRITE)
+s.open('{}proj_tsai.xml'.format(outputPath), cv.FileStorage_WRITE)
 s.write('K', projMatrix)
 s.write('R', R)
 s.write('t', T)

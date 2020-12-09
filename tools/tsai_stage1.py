@@ -154,7 +154,7 @@ def calibrate(pointsPath, imageShape, pixelSize):
     sol = approximateFTz(R, Ty, data.world, data.computerCentered, data.n, params.dy)
     f, Tz = sol[0][0], sol[0][1]
     T = np.array([Tx, Ty, Tz])
-    return data, params, R,T, f,sx
+    return data, params, R,T, f, sx
 
 
 
