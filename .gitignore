@@ -6,8 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
-#Images
-*.png 
+#Images et autres conneries
+*.png
+*.txt
 
 # Distribution / packaging
 .Python

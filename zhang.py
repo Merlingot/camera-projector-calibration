@@ -13,7 +13,7 @@ from tools.util import draw_reprojection, reprojection_err, formatage, outputCle
 # Data:
 SERIE="03_12_2020/"
 # Camera:
-imageSize = (2464, 2056)
+imageSize=(2464, 2056)
 # Projecteur:
 projSize=(1920,1200)
 # Damier
@@ -21,9 +21,9 @@ damier='simple'
 motif='square'
 points_per_row=10; points_per_colum=7
 spacing=10e-2
-paperMargin=0 # À trouver
+paperMargin=0
 patternSize=(points_per_row, points_per_colum)
-patternSizeFull=(points_per_row*2, points_per_colum)
+patternSizeFull=(points_per_row, points_per_colum)
 # ========================================================================
 
 # Input:
@@ -39,8 +39,9 @@ outputfile=os.path.join(outputPath,'calibration.txt')
 outputClean([outputPath,imagesPath])
 f=open(outputfile, 'w+'); f.close()
 
+##### CALIBRATION INTRINSÈQUE ##################################################
 
-# Obtenir les points -----------------------------------
+# Obtenir les points -----------------------------------------------------------
 objectPoints=[]; imagePoints=[]; projPoints=[]
 for i in range(len(noFringePath)):
 
@@ -63,9 +64,9 @@ for i in range(len(noFringePath)):
 
         projp = proj_centers(objp, imgp, projSize, sgmfPath[i], outputPath)
         projPoints.append(projp)
-# --------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-# Camera ----------------------------------------------
+# Camera ----------------------------------------------------------------------
 retval, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
 
 # Enlever les outliers et recalibrer:
@@ -78,14 +79,21 @@ for i in indexes:
     projPoints.pop(i)
 
 retC, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
-# --------------------------------------------------------
+# ------------------------------------------------------------------------------
 
-# Projecteur ----------------------------------------------
+# Projecteur -------------------------------------------------------------------
 retP, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, projPoints, projSize, np.zeros((3,3)), np.zeros((1,4)))
-# --------------------------------------------------------
+# ------------------------------------------------------------------------------
 
+################################################################################
+
+
+##### CALIBRATION EXTRINSÈQUE ##################################################
 retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F = cv.stereoCalibrate(objectPoints, imagePoints, projPoints, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, flags=cv.CALIB_FIX_INTRINSIC)
+################################################################################
 
+
+##### ENREGISTRER ##############################################################
 f=open(outputfile, 'a')
 f.write('- Calibration Stéréo Zhang - \n \n')
 f.write('Erreur de reprojection RMS:\n')
@@ -117,47 +125,4 @@ s.write('t', T)
 s.write('coeffs', projDistCoeffs)
 s.write('imageSize', projSize)
 s.release()
-
-
-# Images de face
-indexes=[7,10,11,12]
-objectPoints_=[]; imagePoints_=[]; projPoints_=[];
-for i in indexes:
-    objectPoints_.append(objectPoints[i])
-    imagePoints_.append(imagePoints[i])
-    projPoints_.append(projPoints[i])
-
-
-retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, E, F = cv.stereoCalibrate(objectPoints_, imagePoints_, projPoints_, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, flags=cv.CALIB_FIX_INTRINSIC)
-
-f=open(outputfile, 'a')
-f.write('- Calibration Stéréo Zhang - \n \n')
-f.write('Erreur de reprojection RMS:\n')
-f.write("{}\n".format(retval))
-f.write('Matrice de rotation:\n')
-f.write("{}\n".format(R))
-f.write('Vecteur translation:\n')
-f.write("{}\n".format(T))
-f.write('Distance euclidienne caméra-projecteur (m):\n')
-f.write("{}\n\n".format(np.linalg.norm(T)))
-f.close()
-
-# Enregistrer:
-s = cv.FileStorage()
-s.open('{}cam_.xml'.format(outputPath), cv.FileStorage_WRITE)
-s.write('K',cameraMatrix)
-s.write('R', np.eye(3))
-s.write('t', np.zeros(T.shape))
-s.write('coeffs', camDistCoeffs)
-s.write('imageSize', imageSize)
-s.release()
-
-# Enregistrer:
-s = cv.FileStorage()
-s.open('{}proj_.xml'.format(outputPath), cv.FileStorage_WRITE)
-s.write('K', projMatrix)
-s.write('R', R)
-s.write('t', T)
-s.write('coeffs', projDistCoeffs)
-s.write('imageSize', projSize)
-s.release()
+################################################################################

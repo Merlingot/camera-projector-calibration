@@ -25,6 +25,23 @@ def get_projPoints(sgmf,imgp):
         projp[i,0,:] = np.array([p.astype(np.float32)])
     return projp
 
+def proj_centers(objp, imgp, projSize, sgmfPath, pointsPath=None):
+
+    # Extraction des coordonnées des points dans le plan image du projecteur
+    SGMF=sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)
+    projp=get_projPoints(SGMF, imgp)
+
+    # # Écriture dans un fichier :
+    # if pointsPath:
+    #     fileProj = open("{}points_proj.txt".format(pointsPath),"w")
+    #     for i in range(imgp.shape[0]):
+    #         point2dProj=projp[i][0]#array(array(u,v))
+    #         point3d=objp[i]
+    #         line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
+    #         fileProj.writelines(line)
+    #     fileProj.close()
+    return projp
+
 
 def get_47(sgmf, circle):
     N=47
@@ -125,20 +142,3 @@ def camera_centers(points_per_row, points_per_colum, paperMargin, spacing, circl
         fileCam.writelines(line)
     fileCam.close()
     return objp.astype(np.float32), imgp.astype(np.float32)
-
-
-def proj_centers(objp, imgp, projSize, sgmfPath, pointsPath=None):
-
-    # Extraction des coordonnées des points dans le plan image du projecteur
-    SGMF=sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)
-    projp=get_projPoints(SGMF, imgp)
-
-    # # 4. Écriture dans un fichier :
-    # fileProj = open("{}points_proj.txt".format(pointsPath),"w")
-    # for i in range(imgp.shape[0]):
-    #     point2dProj=projp[i][0]#array(array(u,v))
-    #     point3d=objp[i]
-    #     line=[ "{} ".format(point3d[0]), "{} ".format(point3d[1]), "{} ".format(point3d[2]), "{} ".format(point2dProj[0]), "{} \n".format(point2dProj[1]) ]
-    #     fileProj.writelines(line)
-    # fileProj.close()
-    return projp

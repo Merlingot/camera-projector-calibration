@@ -2,6 +2,37 @@ import cv2 as cv
 import numpy as np
 import os
 
+
+def clean_folders(output_paths, ext=".png"):
+    for path in output_paths:
+        if not os.path.exists(path):
+            os.makedirs(path)
+        else:
+            for file in os.scandir(path):
+                if file.name.endswith(ext):
+                    os.unlink(file.path)
+
+
+def coins_damier(patternSize,squaresize):
+    objp = np.zeros((patternSize[0]*patternSize[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:patternSize[0], 0:patternSize[1]].T.reshape(-1, 2)
+    objp*=squaresize
+    return objp
+
+def draw_reprojection(color, verifPath, objectPoints, imagePoints, cameraMatrix, distCoeffs, patternSize, squaresize=10e-2):
+
+    objPoints=objectPoints.astype(np.float32)
+    imgPoints=imagePoints.astype(np.float32)
+
+    ret, rvecs, tvecs = cv.solvePnP(objPoints, imgPoints, cameraMatrix, distCoeffs)
+    img	=cv.drawFrameAxes(color.copy(), cameraMatrix, distCoeffs, rvecs, tvecs, squaresize, 5)
+    cv.imwrite('{}reprojection_axes.png'.format(verifPath), img)
+
+    pts, jac = cv.projectPoints(objPoints, rvecs, tvecs, cameraMatrix, distCoeffs)
+    img = cv.drawChessboardCorners(color.copy(), patternSize, pts, 1)
+    cv.imwrite('{}reprojection_points.png'.format(verifPath), img)
+    return img
+
 def outputClean(output_paths):
     for path in output_paths:
         if not os.path.exists(path):
@@ -12,29 +43,7 @@ def outputClean(output_paths):
                     os.unlink(file.path)
 
 
-def draw_reprojection(color, verifPath, objectPoints, imagePoints, cameraMatrix, distCoeffs, patternSize):
-    def draw(img, origin, imgpts):
-        # BGR
-        img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[0].ravel()), (255,0,0), 5) #X
-        img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[1].ravel()), (0,255,0), 5)
-        img = cv.line(img, tuple(origin[0].ravel()), tuple(imgpts[2].ravel()), (0,255,255), 5) # Z en jaune
-        return img
 
-    objPoints=objectPoints.astype(np.float32)
-    imgPoints=imagePoints.astype(np.float32)
-    # Vérification de la calibration de la caméra en reprojection:
-    # Montrer axes
-    axis = np.float32([[1,0,0], [0,1,0], [0,0,1]]).reshape(-1,3)*0.5
-    ret, rvecs, tvecs = cv.solvePnP(objPoints, imgPoints, cameraMatrix, distCoeffs)
-    axisProj, jac = cv.projectPoints(axis, rvecs, tvecs, cameraMatrix, distCoeffs)
-    origin = np.float32([[0,0,0]]).reshape(-1,1)
-    originProj , jac = cv.projectPoints(origin, rvecs, tvecs, cameraMatrix, distCoeffs)
-    img = draw(color.copy(), originProj[0], axisProj)
-    cv.imwrite('{}reprojection_axes.png'.format(verifPath), img)
-    pts, jac = cv.projectPoints(objPoints, rvecs, tvecs, cameraMatrix, distCoeffs)
-    img = cv.drawChessboardCorners(color.copy(), patternSize, pts, 1)
-    cv.imwrite('{}reprojection_points.png'.format(verifPath), img)
-    return img
 
 
 def intrinsic_matrix(f, Cx, Cy, dx, dy):
