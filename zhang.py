@@ -71,6 +71,7 @@ retval, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdD
 # Enlever les outliers et recalibrer:
 indices=np.indices(perViewErrors.shape)[0]
 indexes=indices[perViewErrors>retval*2]
+
 for i in indexes:
     objectPoints.pop(i)
     imagePoints.pop(i)
