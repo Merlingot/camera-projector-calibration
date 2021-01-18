@@ -20,7 +20,7 @@ imgpRT_path=os.path.join(dataPath,"RT-calib/imgpts.txt")
 sgmfRT_path=os.path.join(dataPath,"RT-calib/match_00.png")
 
 # Output:
-outputPath=os.path.join(dataPath,"output/")
+outputPath=os.path.join(dataPath,"output2/")
 imagesPath=os.path.join(outputPath,"detection/")
 outputfile=os.path.join(outputPath,'erreur.txt')
 # Créer/Vider les folder/file:
@@ -65,14 +65,6 @@ for i in range(len(noFringePath)):
         # Enregistrer les coins détectés - optionnel
         img = cv.drawChessboardCorners(color.copy(), patternSize, imgp, ret)
         cv.imwrite("{}corners_{}.png".format(imagesPath,i),img)
-
-# for j in range(len(objectPoints)):
-#     s = cv.FileStorage()
-#     s.open('data/14_01_2021/zhang/points/image_{}.xml'.format(j), cv.FileStorage_WRITE)
-#     s.write('objectPoints',objectPoints[j])
-#     s.write('imagePoints',imagePoints[j])
-#     s.write('projPoints', projPoints[j])
-#     s.release()
 # ------------------------------------------------------------------------------
 
 # Cibles -----------------------------------------------------------------------
@@ -86,15 +78,15 @@ imgpRT=np.genfromtxt(imgpRT_path).astype(np.float32)
 imgpRT=imgpRT.reshape(24, 1, 2)
 # Points du projecteur
 projpRT = proj_centers(objpRT, imgpRT, projSize, sgmfRT_path)
-# plt.plot(objpRT[:,0],objpRT[:,1], 'o-')
-# plt.plot(projpRT[:,0,0], projpRT[:,0,1], 'o-')
 # ------------------------------------------------------------------------------
+
+# Choix de points pour la calibration intrinsèque:
 objectPoints_=objectPoints.copy()
 imagePoints_=imagePoints.copy()
 projPoints_=projPoints.copy()
-# objectPoints_.append(objpRT)
-# imagePoints_.append(imgpRT)
-# projPoints_.append(projpRT)
+objectPoints_.append(objpRT)
+imagePoints_.append(imgpRT)
+projPoints_.append(projpRT)
 #===============================================================================
 
 #==== CALIBRATION INTRINSÈQUE ==================================================
