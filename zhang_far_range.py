@@ -7,7 +7,7 @@ import os
 import glob
 
 from tools.findPoints import proj_centers
-from tools.util import coins_damier, clean_folders
+from tools.util import coins_damier, clean_folders, draw_reprojection
 
 # Data ========================================================================
 dataPath="data/14_01_2021/"
@@ -38,8 +38,9 @@ squaresize=10e-2
 patternSize=(points_per_row, points_per_colum)
 # ==============================================================================
 
+# ==== LIRE LES POINTS =========================================================
 
-#==== CALIBRATION INTRINSÈQUE ==================================================
+# Damier -----------------------------------------------------------------------
 # Listes de points
 objectPoints=[]; imagePoints=[]; projPoints=[]
 # Points 3d
@@ -47,7 +48,6 @@ objp = coins_damier(patternSize, squaresize)
 # termination criteria
 criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-# Obtenir les points -----------------------------------------------------------
 for i in range(len(noFringePath)):
     # Lire l'image
     color=cv.imread(noFringePath[i])
@@ -65,40 +65,53 @@ for i in range(len(noFringePath)):
         # Enregistrer les coins détectés - optionnel
         img = cv.drawChessboardCorners(color.copy(), patternSize, imgp, ret)
         cv.imwrite("{}corners_{}.png".format(imagesPath,i),img)
+
+# for j in range(len(objectPoints)):
+#     s = cv.FileStorage()
+#     s.open('data/14_01_2021/zhang/points/image_{}.xml'.format(j), cv.FileStorage_WRITE)
+#     s.write('objectPoints',objectPoints[j])
+#     s.write('imagePoints',imagePoints[j])
+#     s.write('projPoints', projPoints[j])
+#     s.release()
 # ------------------------------------------------------------------------------
 
-# Camera -----------------------------------------------------------------------
-retC, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
-
-# Enlever les outliers et recalibrer:
-indices=np.indices(perViewErrors.shape)[0]
-indexes=indices[perViewErrors>retC*2]
-if len(indexes) > 0: # Si au moins 1 outlier, recalibrer
-    for i in indexes:
-        objectPoints.pop(i)
-        imagePoints.pop(i)
-        projPoints.pop(i)
-    retC, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, imagePoints, imageSize, np.zeros((3,3)), np.zeros((1,4)))
-# ------------------------------------------------------------------------------
-
-# Projecteur -------------------------------------------------------------------
-retP, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints, projPoints, projSize, np.zeros((3,3)), np.zeros((1,4)))
-# ------------------------------------------------------------------------------
-#===============================================================================
-
-
-#==== CALIBRATION EXTRINSÈQUE ==================================================
+# Cibles -----------------------------------------------------------------------
 # Lire les points
 objpRT=np.genfromtxt(objpRT_path).astype(np.float32)
+# offset x,y
+objpRT[:,1]-=objpRT[2,1]
+objpRT[:,0]-=objpRT[2,0]
+
 imgpRT=np.genfromtxt(imgpRT_path).astype(np.float32)
 imgpRT=imgpRT.reshape(24, 1, 2)
 # Points du projecteur
 projpRT = proj_centers(objpRT, imgpRT, projSize, sgmfRT_path)
-plt.plot(objpRT[:,0],objpRT[:,1], 'o-')
-plt.plot(projpRT[:,0,0], projpRT[:,0,1], 'o-')
-
-retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, _, _ = cv.stereoCalibrate([objpRT], [imgpRT], [projpRT], cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, flags=cv.CALIB_FIX_INTRINSIC)
+# plt.plot(objpRT[:,0],objpRT[:,1], 'o-')
+# plt.plot(projpRT[:,0,0], projpRT[:,0,1], 'o-')
+# ------------------------------------------------------------------------------
+objectPoints_=objectPoints.copy()
+imagePoints_=imagePoints.copy()
+projPoints_=projPoints.copy()
+# objectPoints_.append(objpRT)
+# imagePoints_.append(imgpRT)
+# projPoints_.append(projpRT)
 #===============================================================================
+
+#==== CALIBRATION INTRINSÈQUE ==================================================
+# Camera -----------------------------------------------------------------------
+retC, cameraMatrix, camDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints_, imagePoints_, imageSize, np.zeros((3,3)), np.zeros((1,4)))
+# ------------------------------------------------------------------------------
+
+# Projecteur -------------------------------------------------------------------
+retP, projMatrix, projDistCoeffs, rvecs, tvecs, stdDeviationsIntrinsics, stdDeviationsExtrinsics, perViewErrors=cv.calibrateCameraExtended(objectPoints_, projPoints_, projSize, np.zeros((3,3)), np.zeros((1,4)))
+# ------------------------------------------------------------------------------
+#===============================================================================
+
+#==== CALIBRATION EXTRINSÈQUE ==================================================
+retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, _, _, perViewErrors = cv.stereoCalibrateExtended([objpRT], [imgpRT], [projpRT], cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, imageSize, None, None, flags=cv.CALIB_FIX_INTRINSIC)
+#===============================================================================
+color=cv.imread("data/14_01_2021/RT-calib/cornerSubPix.png")
+img =draw_reprojection(color, outputPath, objpRT, imgpRT, cameraMatrix, camDistCoeffs, (4,6), 1)
 
 #==== ENREGISTRER ==============================================================
 # Enregistrer:
@@ -121,13 +134,13 @@ s.write('coeffs', projDistCoeffs)
 s.write('imageSize', projSize)
 s.release()
 #===============================================================================
-# f=open(outputfile, 'w+'); f.close()
-# f=open(outputfile, 'a')
-# f.write('- Calibration Stéréo Zhang - \n \n')
-# f.write('Erreur de reprojection RMS caméra:\n')
-# f.write("{}\n".format(retC))
-# f.write('Erreur de reprojection RMS projecteur:\n')
-# f.write("{}\n".format(retP))
-# f.write('Erreur de reprojection RMS stéréo:\n')
-# f.write("{}\n".format(retval))
-# f.close()
+f=open(outputfile, 'w+'); f.close()
+f=open(outputfile, 'a')
+f.write('- Calibration Stéréo Zhang - \n \n')
+f.write('Erreur de reprojection RMS caméra:\n')
+f.write("{}\n".format(retC))
+f.write('Erreur de reprojection RMS projecteur:\n')
+f.write("{}\n".format(retP))
+f.write('Erreur de reprojection RMS stéréo:\n')
+f.write("{}\n".format(retval))
+f.close()
