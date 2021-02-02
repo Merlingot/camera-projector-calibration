@@ -1,8 +1,8 @@
 - Calibration Stéréo Zhang - 
  
 Erreur de reprojection RMS caméra:
-0.28577059024468104
+0.28577059024468265
 Erreur de reprojection RMS projecteur:
-0.33180845669032233
+0.33189010653206025
 Erreur de reprojection RMS stéréo:
-1.196789117419302
+1.1887219506145668
