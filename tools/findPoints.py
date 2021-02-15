@@ -49,8 +49,8 @@ def get_47(sgmf, circle):
     srcPoints=np.zeros((N**2, 2))
     dstPoints=np.zeros((N**2, 2))
     k=0
-    for i in range(-n,n):
-        for j in range(-n,n):
+    for i in range(-n,n+1):
+        for j in range(-n,n+1):
             camPix=np.array([circle[0],circle[1],1])+np.array([i,j,0]) #coordonées homogènes
             projPix=sgmf.get_value(camPix) #coordonées homogènes
             srcPoints[k,:]=camPix[:2]

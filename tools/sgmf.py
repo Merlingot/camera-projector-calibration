@@ -21,7 +21,23 @@ class sgmf():
             self.shadowMask = cv2.imread(shadowMaskName)
 
     def get_value(self, vecPix):
-        u,v = int(np.round(vecPix[0])), int(np.round(vecPix[1]))
+        u,v=vecPix[0],vecPix[1]
+
+        u_down, v_down = int(u), int(v) #entier
+        u_up, v_up = int(u+1), int(v+1) #reste
+
+        f_u_up, f_v_up = u%1, v%1 #fraction reste
+        f_u_down, f_v_down = (1-u%1), (1-v%1) #fraction entier
+
         # INDEXATION LIGNE (v), COLONNE (u) !!!!!!
-        ex, ey = self.channelX[v,u], self.channelY[v,u] #les channels
+        # variation en x
+        ex_down = self.channelX[v_down,u_down]
+        ex_up = self.channelX[v_down,u_up]
+        # variation en y
+        ey_down = self.channelY[v_down,u_down]
+        ey_up = self.channelY[v_up,u_down]
+
+        ex = f_u_down*ex_down + f_u_up*ex_up
+        ey = f_v_down*ey_down + f_v_up*ey_up
+
         return np.array([ex,ey])
