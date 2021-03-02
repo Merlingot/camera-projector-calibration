@@ -8,7 +8,10 @@ import os
 import glob
 import random
 from tools.findPoints import proj_centers
-from tools.util import coins_damier, clean_folders, draw_reprojection, measureSimDist, measureAligned, triangulate, transformPoints3d, calibrateExtrinsic, listPlot
+from tools.util import coins_damier, clean_folders, draw_reprojection, measureSimDist, measureAligned, triangulate,\
+    transformPoints3d, unhom, calibrateExtrinsic, listPlot, findHomography3D, visualizePoints, savePointsAsPly, triangulateSGMF,removeBadPts
+
+import open3d
 """
 print(len(np.array([1,2,4]).shape))
 
@@ -24,12 +27,17 @@ print(b)
 exit()
 """
 # Data ========================================================================
-dataPath="data/14_01_2021/"
+#dataPath="data/10_02_2021/"
+dataPath = "data/data-alcoa-17fev/"
 # Data pour intrinsèque:
-#noFringePath=np.sort(glob.glob(os.path.join(dataPath,"zhang/max*.png")))
-#sgmfPath=np.sort(glob.glob(os.path.join(dataPath,"zhang/match*.png")))
-noFringePath=np.sort(glob.glob("/home/lbouchard/data/crvi/14jan/zhang/*/max_00.png"))
-sgmfPath=np.sort(glob.glob("/home/lbouchard/data/crvi/14jan/zhang/*/match_00.png"))
+noFringePath=np.sort(glob.glob(os.path.join(dataPath,"zhang/*/max_00.png")))
+sgmfPath=np.sort(glob.glob(os.path.join(dataPath,"zhang/*/match_00.png")))
+#noFringePath=np.sort(glob.glob("/home/lbouchard/data/crvi/14jan/zhang/*/max_00.png"))
+#sgmfPath=np.sort(glob.glob("/home/lbouchard/data/crvi/14jan/zhang/*/match_00.png"))
+
+#noFringePath=np.sort(glob.glob("/home/lbouchard/data/crvi/10fev/zhang/*/max_00.png"))
+#sgmfPath=np.sort(glob.glob("/home/lbouchard/data/crvi/10fev/zhang/*/match_00.png"))
+
 # Data pour extrinsèque:
 objpRT_path=os.path.join(dataPath,"RT-calib/objpts.txt")
 imgpRT_path=os.path.join(dataPath,"RT-calib/imgpts.txt")
@@ -62,7 +70,7 @@ objectPoints=[]; imagePoints=[]; projPoints=[]
 # Points 3d
 objp = coins_damier(patternSize, squaresize)
 # termination criteria
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+criteria =(cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 for i in range(len(noFringePath)):
     # Lire l'image
@@ -71,13 +79,18 @@ for i in range(len(noFringePath)):
     # Find corners
     ret, corners = cv.findChessboardCorners(gray, patternSize, None)
     if ret==True:
-        imgp = cv.cornerSubPix(gray, corners, patternSize, (-1,-1), criteria)
+        imgp = cv.cornerSubPix(gray, corners, patternSize,(-1,-1), criteria)
+
+
         # Ajouter aux listes
         objectPoints.append(objp)
-        imagePoints.append(imgp)
+        ##################### ajouter 0.5!
+        imagePoints.append(imgp + 0.5)
         # Points du projecteur
         projp = proj_centers(objp, imgp, projSize, sgmfPath[i])
-        projPoints.append(projp)
+
+        ##################### ajouter 0.5!
+        projPoints.append(projp + 0.5)
         # Enregistrer les coins détectés - optionnel
         img = cv.drawChessboardCorners(color.copy(), patternSize, imgp, ret)
         cv.imwrite("{}corners_{}.png".format(imagesPath,i),img)
@@ -86,15 +99,25 @@ for i in range(len(noFringePath)):
 # Cibles -----------------------------------------------------------------------
 # Lire les points
 objpRT=np.genfromtxt(objpRT_path).astype(np.float32)
+#objpRT = objpRT / 1000.0
 # offset x,y
-objpRT[:,1]-=objpRT[2,1]
-objpRT[:,0]-=objpRT[2,0]
-
+###objpRT[:,1]-=objpRT[2,1]
+###objpRT[:,0]-=objpRT[2,0]
+print("objpRT:\n", objpRT)
 imgpRT=np.genfromtxt(imgpRT_path).astype(np.float32)
-imgpRT=imgpRT.reshape(24, 1, 2)
+print("imgpRT:\n", imgpRT)
+nbPts = imgpRT.shape[0]
+print(nbPts)
+imgpRT=imgpRT.reshape(nbPts, 1, 2)
+
 # Points du projecteur
 projpRT = proj_centers(objpRT, imgpRT, projSize, sgmfRT_path)
+print("projpRT:\n", projpRT)
 # ------------------------------------------------------------------------------
+##################### ajouter 0.5!
+imgpRT = imgpRT + 0.5
+projpRT = projpRT + 0.5
+
 
 # Choix de points pour la calibration intrinsèque:
 objectPoints_=objectPoints.copy()
@@ -103,6 +126,7 @@ projPoints_=projPoints.copy()
 objectPoints_.append(objpRT)
 imagePoints_.append(imgpRT)
 projPoints_.append(projpRT)
+
 
 #===============================================================================
 #==== CALIBRATION INTRINSÈQUE ==================================================
@@ -123,8 +147,46 @@ retval, cameraMatrix, camDistCoeffs, projMatrix, projDistCoeffs, R, T, _, _, per
 originalT = T.flatten()
 originalR = R.copy()
 #===============================================================================
-color=cv.imread("data/14_01_2021/RT-calib/cornerSubPix.png")
-img =draw_reprojection(color, outputPath, objpRT, imgpRT, cameraMatrix, camDistCoeffs, (4,6), 1)
+color=cv.imread(dataPath + "/RT-calib/cornerSubPix.png")
+img =draw_reprojection(color, outputPath, objpRT, imgpRT, cameraMatrix, camDistCoeffs,(4,6), 1)
+
+
+#==== ENREGISTRER ==============================================================
+# Enregistrer:
+s = cv.FileStorage()
+camfilepath='{}cam.xml'.format(outputPath)
+s.open(camfilepath, cv.FileStorage_WRITE)
+s.write('K',cameraMatrix)
+s.write('R', np.eye(3))
+s.write('t', np.zeros(T.shape))
+s.write('coeffs', camDistCoeffs)
+s.write('imageSize', imageSize)
+s.release()
+print("wrote", camfilepath)
+# Enregistrer:
+s = cv.FileStorage()
+projfilepath='{}proj.xml'.format(outputPath)
+s.open(projfilepath, cv.FileStorage_WRITE)
+s.write('K', projMatrix)
+s.write('R', R)
+s.write('t', T)
+s.write('coeffs', projDistCoeffs)
+s.write('imageSize', projSize)
+s.release()
+print("wrote", projfilepath)
+#===============================================================================
+f=open(outputfile, 'w+'); f.close()
+f=open(outputfile, 'a')
+f.write('- Calibration Stéréo Zhang - \n \n')
+f.write('Erreur de reprojection RMS caméra:\n')
+f.write("{}\n".format(retC))
+f.write('Erreur de reprojection RMS projecteur:\n')
+f.write("{}\n".format(retP))
+f.write('Erreur de reprojection RMS stéréo:\n')
+f.write("{}\n".format(retval))
+f.close()
+
+print("done")
 
 print("##################################")
 print("########  MEASUREMENTS  ##########")
@@ -145,16 +207,109 @@ retval, rvec, tvec = cv.solvePnP(objpRT, imgpRT, cameraMatrix, camDistCoeffs)
 
 print("retval", retval)
 print("rvec", rvec)
-R, _ = cv.Rodrigues(rvec)
-print("R:\n", R)
+pnpR, _ = cv.Rodrigues(rvec)
+print("R:\n", pnpR)
 print("tvec", tvec)
-RT = np.c_[R, tvec]
-print("RT:\n", RT)
+pnpRT = np.c_[pnpR, tvec]
+print("RT:\n", pnpRT)
 
-transpoints = transformPoints3d(objpRT, RT)
+transpoints = transformPoints3d(objpRT, pnpRT)
 print("transpoints\n", transpoints)
 measureAligned(reconpts, transpoints)
-#exit()
+
+red = [1,0,0]
+green = [0,1,0]
+blue = [0,0,1]
+#visualizePoints([reconpts, transpoints], [red, green])
+savePointsAsPly("mesh-recon.ply", reconpts, [red])
+savePointsAsPly("mesh-transpts.ply", transpoints, [green])
+
+exit()
+if False:
+    #sgmfMurPath = "/home/lbouchard/data/crvi/10fev/mur/72k/match_00.png"
+    #maskMurPath = "/home/lbouchard/data/crvi/10fev/mur/72k/mask_00.png"
+    sgmfbasepath = "./data/data-alcoa-17fev/RT-calib/"
+    sgmf = sgmfbasepath + "match_00.png"
+    mask = sgmfbasepath + "mask_00.png"
+    tex = sgmfbasepath + "max_00.png"
+    #pts3d = triangulateSGMF(sgmfMurPath, maskMurPath, projSize, cameraMatrix, projMatrix, camDistCoeffs, projDistCoeffs, R, T)
+    pts3d, colors = triangulateSGMF(sgmf, mask, tex, projSize, cameraMatrix, projMatrix, camDistCoeffs, projDistCoeffs, R, T)
+
+    bbMargin = np.array([0.4]*3)
+    bboxMin = np.min(pts3d, axis=0)
+    bboxMax = np.max(pts3d, axis=0)
+    print("pts3d bboxMin", bboxMin)
+    print("pts3d bboxMax", bboxMax)
+    bboxMin = np.min(transpoints, axis=0)
+    bboxMax = np.max(transpoints, axis=0)
+    print("transpoints bboxMin", bboxMin)
+    print("transpoints bboxMax", bboxMax)
+    bboxMin = bboxMin - bbMargin
+    bboxMax = bboxMax + bbMargin
+
+    pts3d, colors = removeBadPts(pts3d, colors, bbox=[bboxMin, bboxMax])
+    savePointsAsPly("mesh-RT.ply", pts3d, colors)
+
+###exit()
+
+fourCornersIdx = [0, 2, 9, 11]
+
+H = findHomography3D(reconpts[fourCornersIdx], transpoints[fourCornersIdx])
+print("H\n", H)
+recon2 = np.zeros(reconpts.shape)
+for i in range(0, reconpts.shape[0]):
+    p = reconpts[i]
+    p = np.append(p, 1)
+    q = np.dot(H, p)
+    q = unhom(q)
+    print(i, p, q)
+    recon2[i] = q
+
+print("recon2\n", recon2)
+measureAligned(recon2, transpoints)
+
+visualizePoints([reconpts, transpoints, recon2], [red, green, blue])
+
+"""
+reds = np.array([[1,0,0]] * reconpts.shape[0])
+greens = np.array([[0,1,0]] * reconpts.shape[0])
+blues = np.array([[0,0,1]] * reconpts.shape[0])
+#print("reds:\n", reds)
+
+pcd1 = open3d.geometry.PointCloud()
+pcd1.points = open3d.utility.Vector3dVector(reconpts)
+pcd1.colors = open3d.utility.Vector3dVector(reds)
+
+pcd2 = open3d.geometry.PointCloud()
+pcd2.points = open3d.utility.Vector3dVector(transpoints)
+pcd2.colors = open3d.utility.Vector3dVector(greens)
+
+pcd3 = open3d.geometry.PointCloud()
+pcd3.points = open3d.utility.Vector3dVector(recon2)
+pcd3.colors = open3d.utility.Vector3dVector(blues)
+
+
+
+visualizer = open3d.visualization.Visualizer()  #VisualizerWithEditing()
+#visualizer.create_window(window_name='Open3D', width=1920, height=1080, left=0, top=0, visible=True)
+visualizer.create_window()
+renderOptions = visualizer.get_render_option()
+renderOptions.background_color = np.asarray([0, 0, 0])
+renderOptions.point_size = 2
+renderOptions.show_coordinate_frame = True
+#a_cloud = open3d.geometry.PointCloud()
+#a_cloud.points = open3d.utility.Vector3dVector(clouds)
+#an_image = open3d.io.read_image('some_image.png')
+visualizer.add_geometry(pcd1)
+visualizer.add_geometry(pcd2)
+#visualizer.add_geometry(pcd3)
+
+#visualizer.add_geometry(an_image)
+visualizer.run()
+visualizer.destroy_window()
+"""
+
+exit()
 
 print("##################################")
 print("##########  DECIMATION  ##########")
@@ -199,7 +354,7 @@ for i in range(4, objpRT.shape[0]):
     alignedStdDistData.append([])
 
     #u = 0.3
-    #v = u + (1.0 - u) * i / nb
+    #v = u +(1.0 - u) * i / nb
     #n = int(objpRT.shape[0] * v)
 
     for j in range(repeats):
@@ -313,9 +468,9 @@ print("nbpicks", nbPicks)
 
 ylbls = ["min", "max", "avg", "std"]
 ydata = np.c_[avgSimMinDistdata, avgSimMaxDistdata, avgSimAvgDistdata, avgSimStdDistdata]
-listPlot(nbPicks, ydata, "Similar distances", "Number of targets", "Distance (m)", "./sim_plt1.png", ySubLabels=ylbls)
+listPlot(nbPicks, ydata, "Similar distances", "Number of targets", "Distance(m)", "./sim_plt1.png", ySubLabels=ylbls)
 ydata = np.c_[avgAlignedMinDistData, avgAlignedMaxDistData, avgAlignedAvgDistData, avgAlignedStdDistData]
-listPlot(nbPicks, ydata, "Aligned target distances", "Number of targets", "Distance (m)", "./aligned_plt1.png", ySubLabels=ylbls)
+listPlot(nbPicks, ydata, "Aligned target distances", "Number of targets", "Distance(m)", "./aligned_plt1.png", ySubLabels=ylbls)
 
 print("avgSimMinDistdata", avgSimMinDistdata)
 print("avgSimMaxDistdata", avgSimMaxDistdata)
@@ -351,7 +506,7 @@ print("mind", mind)
 print("maxd", maxd)
 print("avgd", avgd)
 print("stdd", stdd)
-
+visualizePoints([reconpts, transpoints], [red, green])
 
 """
 x=[0,1,2,3,4,5,6,7]
@@ -384,37 +539,4 @@ measure(objpRT, undistCamPts, undistProjPts, cameraMatrix, projMatrix, R, T)
 
 
 
-#==== ENREGISTRER ==============================================================
-# Enregistrer:
-s = cv.FileStorage()
-s.open('{}cam.xml'.format(outputPath), cv.FileStorage_WRITE)
-s.write('K',cameraMatrix)
-s.write('R', np.eye(3))
-s.write('t', np.zeros(T.shape))
-s.write('coeffs', camDistCoeffs)
-s.write('imageSize', imageSize)
-s.release()
-
-# Enregistrer:
-s = cv.FileStorage()
-s.open('{}proj.xml'.format(outputPath), cv.FileStorage_WRITE)
-s.write('K', projMatrix)
-s.write('R', R)
-s.write('t', T)
-s.write('coeffs', projDistCoeffs)
-s.write('imageSize', projSize)
-s.release()
-#===============================================================================
-f=open(outputfile, 'w+'); f.close()
-f=open(outputfile, 'a')
-f.write('- Calibration Stéréo Zhang - \n \n')
-f.write('Erreur de reprojection RMS caméra:\n')
-f.write("{}\n".format(retC))
-f.write('Erreur de reprojection RMS projecteur:\n')
-f.write("{}\n".format(retP))
-f.write('Erreur de reprojection RMS stéréo:\n')
-f.write("{}\n".format(retval))
-f.close()
-
-print("done")
 

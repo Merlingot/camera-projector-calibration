@@ -5,7 +5,8 @@ import numpy as np
 import os
 import random
 import matplotlib.pyplot as plt
-
+import open3d
+import tools.sgmf as sgmf
 
 def clean_folders(output_paths, ext=".png"):
     for path in output_paths:
@@ -157,8 +158,16 @@ def makeR4x4(R, T=None):
 
 def triangulate(campts, projpts, cameraIntrMatrix3x3, projIntrMatrix3x3, camDistCoeffs, projDistCoeffs, R, T):
 
+    a = 0
+    b = a+10
+    print("campts\n", campts[a:b, :])
+    print("projpts\n", projpts[a:b, :])
+
     undistCamPts = cv.undistortPoints(campts, cameraIntrMatrix3x3, camDistCoeffs)
     undistProjPts = cv.undistortPoints(projpts, projIntrMatrix3x3, projDistCoeffs)
+
+    print("undistCamPts\n", undistCamPts[a:b, :])
+    print("undistProjPts\n", undistProjPts[a:b, :])
 
     undistCamPts = undistCamPts.reshape((undistCamPts.shape[0], undistCamPts.shape[-1]))
     undistProjPts = undistProjPts.reshape((undistProjPts.shape[0], undistProjPts.shape[-1]))
@@ -181,7 +190,92 @@ def triangulate(campts, projpts, cameraIntrMatrix3x3, projIntrMatrix3x3, camDist
         rp = unhom(reconpts4[i])
         reconpts[i] = rp
 
+    print("undistCamPts", undistCamPts.shape)
+    print("undistProjPts", undistProjPts.shape)
+    print("reconpts", reconpts.shape)
+    for i in range(0, 10):
+        print(undistCamPts[i], " - ", undistProjPts[i], " - ", reconpts[i])
+
     return reconpts
+
+def triangulateSGMF(sgmfPath, maskPath, texPath, projSize, cameraIntrMatrix3x3, projIntrMatrix3x3, camDistCoeffs, projDistCoeffs, R, T):
+
+    mask = cv.imread(maskPath, cv.IMREAD_GRAYSCALE)
+    tex = cv.imread(texPath, cv.IMREAD_GRAYSCALE)
+
+    SGMF = sgmf.sgmf(sgmfPath, projSize, shadowMaskName=None)
+    (camWidth, camHeight) = SGMF.camSize
+    camPts = []
+    projPts = []
+    col = []
+    i = 0
+
+    a = 500000
+    b = a + 10
+    xx = 1250
+    yy = 1020
+
+    for y in range(0, camHeight):
+        for x in range(0, camWidth):
+            p = [x, y]
+            q = SGMF.get_value(p)
+            c = tex[y, x] / 255.0
+            m = mask[y, x]
+            if (x == xx) and y == yy:
+                print(x, y, c, m)
+            if m > 0:
+                #camPts.append(p)
+                #projPts.append(q)
+                col.append([c,c,c])
+                camPts.append([p[0] + 0.5, p[1] + 0.5])
+                projPts.append([q[0] + 0.5, q[1] + 0.5])
+
+                if a <= i < b:
+                    print(p, " :: ", q, " :: ", c)
+                i = i + 1
+
+
+
+    camPts = np.array(camPts, dtype=float)
+    projPts = np.array(projPts)
+
+    pts3d = triangulate(camPts, projPts, cameraIntrMatrix3x3, projIntrMatrix3x3, camDistCoeffs, projDistCoeffs, R, T)
+
+    return pts3d, np.array(col)
+
+def removeBadPts(pts, cols, stdFactor=0.5, bbox=None):
+    print("removeBadPts")
+    print(pts[0:10, :])
+    print(cols[0:10, :])
+
+    avg = np.mean(pts, axis=0)
+    std = np.std(pts, axis=0)
+    print("avg", avg)
+    print("std", std)
+    print("min", np.min(pts, axis=0))
+    print("max", np.max(pts, axis=0))
+    minbox = avg-std*stdFactor
+    maxbox = avg+std*stdFactor
+    print("minbox", minbox)
+    print("maxbox", maxbox)
+    goodPts = []
+    goodCols = []
+    for k, p in enumerate(pts):
+        yes = True
+        for i in range(0, 3):
+            if not minbox[i] < p[i] < maxbox[i]:
+                yes = False
+                break
+            if bbox is not None:
+                if not bbox[0][i] < p[i] < bbox[1][i]:
+                    yes = False
+                    break
+        if yes:
+            goodPts.append(p)
+            c = cols[k]
+            goodCols.append(c)
+
+    return np.array(goodPts), np.array(goodCols)
 
 
 def measureAligned(objpts, reconpts):
@@ -200,11 +294,19 @@ def measureAligned(objpts, reconpts):
     maxDist = max(dists)
     avgDist = np.mean(dists)
     stdDist = np.std(dists)
-    """
+
+    maxIdx = dists.index(maxDist)
+    print("max idx", maxIdx)
+    print(maxDist)
+    print(objpts[maxIdx])
+    print(reconpts[maxIdx])
+    print(reconpts[maxIdx] - objpts[maxIdx])
+
     print("minDist", minDist)
     print("maxDist", maxDist)
     print("avgDist", avgDist)
-    print("stdDist", stdDist)"""
+    print("stdDist", stdDist)
+
     return minDist, maxDist, avgDist, stdDist
 
 
@@ -258,11 +360,11 @@ def measureSimDist(objpts, reconpts):
     maxDD = max(distDiffs)
     avgDD = np.mean(distDiffs)
     stdDD = np.std(distDiffs)
-    """
+
     print("minDD", minDD)
     print("maxDD", maxDD)
     print("avgDD", avgDD)
-    print("stdDD", stdDD)"""
+    print("stdDD", stdDD)
     return minDD, maxDD, avgDD, stdDD
 
 
@@ -361,6 +463,173 @@ T
  [-0.00765998]
  [-0.28205569]]
     """
+
+
+def normalizeND(pts):
+    """
+    # type: (np.ndarray) -> (np.ndarray, np.ndarray)
+
+    :param point_list: point list to be normalized
+    :return: normalization results
+
+    m = np.mean(point_list[:2], axis=1)
+    max_std = max(np.std(point_list[:2], axis=1)) + 1e-9
+    c = np.diag([1 / max_std, 1 / max_std, 1])
+    c[0][2] = -m[0] / max_std
+    c[1][2] = -m[1] / max_std
+    return np.dot(c, point_list), c
+
+     m = mean(fp[:2], axis=1)
+    maxstd = max(std(fp[:2], axis=1)) + 1e-9
+    C1 = diag([1/maxstd, 1/maxstd, 1])
+    C1[0][2] = -m[0]/maxstd
+    C1[1][2] = -m[1]/maxstd
+    """
+    #points are rows!
+    nb = pts.shape[0]
+    ndim = pts.shape[1]
+    mean = np.mean(pts, axis=0)
+    normMean = np.linalg.norm(mean)
+    scale = normMean / math.sqrt(2.0)
+    T = np.zeros((ndim+1, ndim+1))
+    for i in range(0, ndim):
+        T[i, i] = 1.0 / scale
+    T[ndim, ndim] = 1.0
+    for i in range(0, ndim):
+        T[i, ndim] = -mean[i] / scale
+    #print("T\n", T)
+    hpts = np.c_[pts, np.ones(nb)]
+    #print("hpts\n", hpts)
+    npts = np.dot(T, hpts.transpose()).transpose()
+    #print("npts\n", npts)
+    #exit()
+    return npts[:, 0:ndim], T
+
+
+"""
+def calculate_homography_matrix(origin, dest):
+
+    assert origin.shape == dest.shape
+
+    origin, c1 = normalize(origin)
+    dest, c2 = normalize(dest)
+
+    nbr_correspondences = origin.shape[1]
+    a = np.zeros((2 * nbr_correspondences, 9))
+    for i in range(nbr_correspondences):
+        a[2 * i] = [-origin[0][i], -origin[1][i], -1, 0, 0, 0, dest[0][i] * origin[0][i], dest[0][i] * origin[1][i],
+                    dest[0][i]]
+        a[2 * i + 1] = [0, 0, 0, -origin[0][i], -origin[1][i], -1, dest[1][i] * origin[0][i], dest[1][i] * origin[1][i],
+                        dest[1][i]]
+    u, s, v = np.linalg.svd(a)
+    homography_matrix = v[8].reshape((3, 3))
+    homography_matrix = np.dot(np.linalg.inv(c2), np.dot(homography_matrix, c1))
+    homography_matrix = homography_matrix / homography_matrix[2, 2]
+    return homography_matrix
+"""
+
+def findHomography3D(pts1, pts2):
+
+    if not isinstance(pts1, np.ndarray):
+        pts1 = np.array(pts1)
+
+    if not isinstance(pts2, np.ndarray):
+        pts2 = np.array(pts2)
+
+    assert pts1.shape == pts2.shape
+
+    print("pts1:\n", pts1)
+    print("pts2:\n", pts2)
+
+    #pts1, c1 = normalizeND(pts1)
+    #pts2, c2 = normalizeND(pts2)
+
+    #print("*pts1:\n", pts1)
+    #print("*pts2:\n", pts2)
+
+    nb = pts1.shape[0]
+    A = np.zeros((3*nb, 16))
+
+    for i in range(0, nb):
+        x1 = pts1[i][0]
+        y1 = pts1[i][1]
+        z1 = pts1[i][2]
+
+        x2 = pts2[i][0]
+        y2 = pts2[i][1]
+        z2 = pts2[i][2]
+
+        A[3 * i + 0] = [ -x1, -y1, -z1,  -1,   0,   0,   0,   0,   0,   0,   0,   0,  x2*x1, x2*y1, x2*z1, x2 ]
+        A[3 * i + 1] = [ 0,   0,     0,   0, -x1, -y1, -z1,  -1,   0,   0,   0,   0,  y2*x1, y2*y1, y2*z1, y2 ]
+        A[3 * i + 2] = [ 0,   0,     0,   0,   0,   0,   0,   0, -x1, -y1, -z1,  -1,  z2*x1, z2*y1, z2*z1, z2 ]
+
+    U, S, V = np.linalg.svd(A)
+    print("V.shape", V.shape)
+    H = V[15].reshape((4, 4))
+    #H = np.dot(np.linalg.inv(c2), np.dot(H, c1))
+    H = H / H[3, 3]
+    return H
+
+
+def visualizePoints(arrayOfarraysOfPoints, arrayOfColors):
+
+    if not isinstance(arrayOfarraysOfPoints, np.ndarray):
+        arrayOfarraysOfPoints = np.array(arrayOfarraysOfPoints)
+
+    if not isinstance(arrayOfColors, np.ndarray):
+        arrayOfColors = np.array(arrayOfColors)
+
+    assert arrayOfarraysOfPoints.shape[0] == arrayOfColors.shape[0]
+    nb = arrayOfarraysOfPoints.shape[0]
+
+    # open3d.visualization.draw_geometries([pcd1, pcd2])#, pcd3])
+
+    visualizer = open3d.visualization.Visualizer()  # VisualizerWithEditing()
+    # visualizer.create_window(window_name='Open3D', width=1920, height=1080, left=0, top=0, visible=True)
+    visualizer.create_window()
+    renderOptions = visualizer.get_render_option()
+    renderOptions.background_color = np.asarray([0, 0, 0])
+    renderOptions.point_size = 2
+    renderOptions.show_coordinate_frame = True
+
+    for i in range(0, nb):
+        pts = arrayOfarraysOfPoints[i]
+        col = np.array([arrayOfColors[i]] * pts.shape[0])
+        pcd = open3d.geometry.PointCloud()
+        pcd.points = open3d.utility.Vector3dVector(pts)
+        pcd.colors = open3d.utility.Vector3dVector(col)
+        #open3d.io.write_point_cloud("pcd"+str(i)+".ply", pcd)
+        #pcds.append(pcd)
+        visualizer.add_geometry(pcd)
+
+    visualizer.run()
+    visualizer.destroy_window()
+
+def savePointsAsPly(path, points, color=None):
+
+    if not isinstance(points, np.ndarray):
+        points = np.array(points)
+
+    if color is not None and not isinstance(color, np.ndarray):
+        color = np.array(color)
+
+    print("points.shape", points.shape)
+
+    pcd = open3d.geometry.PointCloud()
+    pcd.points = open3d.utility.Vector3dVector(points)
+
+    if color is not None:
+        print("color.shape", color.shape)
+        #print(color)
+        if color.shape[0] == 1:
+            print("single color...")
+            color = np.array([color[0]] * points.shape[0])
+        print(color)
+        print("min", np.min(color, axis=0))
+        print("max", np.max(color, axis=0))
+        pcd.colors = open3d.utility.Vector3dVector(color)
+
+    open3d.io.write_point_cloud(path, pcd)
 
 
 def measureold(objpts, imgpts1, imgpts2, K1, K2, coeffs1, coeffs2, R, T):
